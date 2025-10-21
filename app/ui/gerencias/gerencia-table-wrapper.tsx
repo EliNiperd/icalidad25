@@ -1,0 +1,52 @@
+'use client';
+
+import { DataTable } from '@/app/ui/shared/data-table';
+import type { Column } from '@/app/ui/shared/data-table';
+import { Gerencia } from '@/lib/schemas/gerencia';
+import GerenciaActions from './gerencia-actions';
+
+interface GerenciaTableWrapperProps {
+  gerencias: Gerencia[];
+  totalRecords: number;
+  totalPages: number;
+  pageSize: number;
+  defaultSortBy: string;
+  defaultSortOrder: 'asc' | 'desc';
+  searchPlaceholder?: string;
+}
+
+export default function GerenciaTableWrapper({
+  gerencias,
+  totalRecords,
+  totalPages,
+  pageSize,
+  defaultSortBy,
+  defaultSortOrder,
+  searchPlaceholder,
+}: GerenciaTableWrapperProps) {
+
+  const columns: Column<Gerencia>[] = [
+    { key: 'ClaveGerencia', header: 'Clave', sortable: true },
+    { key: 'NombreGerencia', header: 'Nombre', sortable: true },
+    { 
+      key: 'IdEstatusGerencia', 
+      header: 'Estatus', 
+      sortable: true,
+      renderType: 'estatusGerencia',
+    },
+  ];
+
+  return (
+    <DataTable
+      data={gerencias}
+      columns={columns}
+      totalRecords={totalRecords}
+      totalPages={totalPages}
+      pageSize={pageSize}
+      defaultSortBy={defaultSortBy}
+      defaultSortOrder={defaultSortOrder}
+      searchPlaceholder={searchPlaceholder}
+      renderActions={(row: Gerencia) => <GerenciaActions idGerencia={row.IdGerencia} />}
+    />
+  );
+}

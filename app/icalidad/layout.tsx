@@ -2,24 +2,22 @@ import { auth, signOut } from "@/auth";
 import { redirect } from "next/navigation";
 import { getRawMenuItems } from "@/lib/data/menu";
 import { buildMenuTree, MenuItem } from "@/lib/utils/menu-builder";
-import SideMenu from "@/app/components/SideMenu"; // Importar el nuevo componente SideMenu
+import SideMenu from "@/app/components/SideMenu";
 
-export default async function DashboardPage() {
+export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
 
   if (!session?.user) {
     redirect("/login");
   }
 
-  // Obtener idEmpleado y idRol de la sesión
-  const idEmpleado = parseInt(session.user.id); // Asumiendo que user.id es el IdEmpleado
-  const idRol = session.user.idRol; // Asumiendo que user.idRol está disponible en la sesión
+  // Fetch menu items
+  const idEmpleado = parseInt(session.user.id); // Assuming user.id is IdEmpleado
+  const idRol = session.user.idRol; // Assuming user.idRol is available in session
 
   let menuTree: MenuItem[] = [];
   if (idEmpleado && idRol) {
-    // Obtener todos los elementos del menú en formato plano (sin filtrar por padre aquí)
-    const rawMenuItems = await getRawMenuItems(idEmpleado, idRol, null); 
-    // Construir el árbol jerárquico del menú
+    const rawMenuItems = await getRawMenuItems(idEmpleado, idRol, null); // Fetch top-level menus
     menuTree = buildMenuTree(rawMenuItems);
   }
 
@@ -32,7 +30,7 @@ export default async function DashboardPage() {
       <main className="flex-1 flex flex-col">
         {/* Barra superior con información del usuario */}
         <header className="bg-white shadow-md p-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
+          <h1 className="text-2xl font-bold text-gray-800">iCalidad Dashboard</h1>
           <div className="flex items-center space-x-4">
             {session.user && (
               <span className="text-gray-700">Bienvenido, {session.user.name || session.user.username}</span>
@@ -50,10 +48,9 @@ export default async function DashboardPage() {
           </div>
         </header>
 
-        {/* Área de contenido del dashboard */}
-        <section className="flex-1 p-6">
-          <h2 className="text-xl font-semibold text-gray-800">Contenido Principal del Dashboard</h2>
-          <p className="mt-4 text-gray-600">Aquí irá el contenido específico de cada sección.</p>
+        {/* Área de contenido dinámico */}
+        <section className="flex-1 p-6 overflow-auto">
+          {children}
         </section>
       </main>
     </div>

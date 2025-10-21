@@ -36,21 +36,48 @@ Integrar la ruta `/login` y asegurar que el formulario de inicio de sesión func
 - **Manejo de Errores en `app/login/action.ts`:**
     - Se modificó la acción del servidor `authenticate` para capturar el `Error` lanzado desde `auth.ts`.
     - Se implementó una lógica para extraer el mensaje específico del SP de la propiedad `error.cause.err.message` (debido a cómo NextAuth envuelve los errores) y lanzar un nuevo `Error` con ese mensaje.
+    - Se ajustó para manejar correctamente el `RedirectError` de Next.js, permitiendo la redirección al dashboard tras un login exitoso.
 - **Manejo de Errores en `login-form.tsx`:**
     - Se ajustó la función `handleSubmit` para usar un bloque `try...catch` alrededor de la llamada a `authenticate`.
     - Se configuró `setErrorMessage(error.message)` para mostrar el mensaje específico del error lanzado por la Server Action.
 - **Tipado de NextAuth:** Se actualizó `next-auth.d.ts` para extender los tipos `Session`, `User` y `JWT` con propiedades personalizadas (`idRol`, `nombreRol`, `username`).
 
 ### Resultado
-El formulario de login ahora funciona correctamente, autenticando usuarios a través del stored procedure y mostrando mensajes de error específicos (ej. "La cuenta se encuentra inactiva.", "Credenciales inválidas.") directamente en la interfaz de usuario.
+El formulario de login ahora funciona correctamente, autenticando usuarios a través del stored procedure y mostrando mensajes de error específicos (ej. "La cuenta se encuentra inactiva.", "Credenciales inválidas.") directamente en la interfaz de usuario. La redirección al dashboard tras un login exitoso también funciona.
+
+---
+
+## 3. Diseño del Dashboard y Menú Dinámico
+
+### Problema Original
+Crear una página de dashboard para usuarios autenticados, mostrar información del usuario y cargar un menú dinámico con submenús desde la base de datos.
+
+### Acciones Realizadas
+- **Creación de `app/dashboard/page.tsx`:** Página principal del dashboard con protección de ruta, información de usuario y botón de cerrar sesión.
+- **Configuración de Redirección:** Se añadió `defaultRedirect: "/dashboard"` en `auth.config.ts` para redirigir automáticamente tras el login.
+- **Creación de `lib/data/menu.ts`:** Función para llamar al SP `usp_GetMenuByEmployeeIdAndRole` y obtener los datos planos del menú.
+- **Creación de `lib/utils/menu-builder.ts`:** Función para transformar la lista plana del menú en una estructura de árbol jerárquica.
+- **Creación de `app/components/SideMenu.tsx`:** Componente cliente para renderizar el menú de forma recursiva, con manejo de submenús expandibles/colapsables.
+- **Integración de Iconos:** Se actualizó `SideMenu.tsx` para usar iconos de `lucide-react` y mostrar un icono por defecto con un indicador "(s/i)" si no se encuentra un icono válido en la BD.
+- **Script SQL para Iconos:** Se generó `lib/database/update_menu_icons.sql` para actualizar los nombres de los iconos en la BD a los de `lucide-react`.
+
+### Resultado
+El dashboard básico está implementado con información del usuario y un menú lateral dinámico que carga datos desde la base de datos, incluyendo la visualización de iconos de `lucide-react` o un icono por defecto con indicador.
 
 ---
 
 ## Próximos Pasos (Según Solicitud del Usuario)
 
-1.  **Mejorar Diseño del Login:**
-    - Incluir un logotipo en la página de login.
-2.  **Diseñar Dashboard/Landing Page:**
-    - Crear una página básica para usuarios autenticados.
-    - Mostrar información del usuario autenticado de forma discreta (esquina superior derecha).
-    - Cargar un menú dinámico con submenús basados en el perfil del usuario desde la base de datos.
+1.  **Catálogo de Gerencias (`/gerencia`):**
+    -   **Página Principal:** Mostrar una tabla con información de gerencias (SP: `PF_Gen_TGerencia`).
+    -   **Funcionalidades de Tabla:** Búsqueda amigable, paginación (10 elementos por defecto, ajustable), información de paginación (total de registros), ordenamiento por columnas.
+    -   **Acciones:** Botones para Crear, Editar, Eliminar.
+    -   **Formulario Único (Creación/Edición):**
+        -   Validaciones correspondientes.
+        -   Creación (SP: `PI_Gen_TGerencia`).
+        -   Edición (SP: `PU_Gen_TGerencia`).
+        -   Carga de datos para edición (SP: `PFK_Gen_TGerencia`).
+
+2.  **Catálogo de Departamentos:** (Pendiente de definición)
+3.  **Catálogo de Puestos:** (Pendiente de definición)
+4.  **Catálogo de Empleados:** (Pendiente de definición)
