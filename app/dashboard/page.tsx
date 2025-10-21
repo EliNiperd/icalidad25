@@ -1,5 +1,8 @@
 import { auth, signOut } from "@/auth";
 import { redirect } from "next/navigation";
+import { getRawMenuItems } from "@/lib/data/menu";
+import { buildMenuTree, MenuItem } from "@/lib/utils/menu-builder";
+import SideMenu from "@/app/components/SideMenu"; // Importar el nuevo componente SideMenu
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -8,20 +11,22 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
+  // Obtener idEmpleado y idRol de la sesión
+  const idEmpleado = parseInt(session.user.id); // Asumiendo que user.id es el IdEmpleado
+  const idRol = session.user.idRol; // Asumiendo que user.idRol está disponible en la sesión
+
+  let menuTree: MenuItem[] = [];
+  if (idEmpleado && idRol) {
+    // Obtener todos los elementos del menú en formato plano (sin filtrar por padre aquí)
+    const rawMenuItems = await getRawMenuItems(idEmpleado, idRol, null); 
+    // Construir el árbol jerárquico del menú
+    menuTree = buildMenuTree(rawMenuItems);
+  }
+
   return (
     <div className="flex h-screen bg-gray-100">
       {/* Sidebar para el menú */}
-      <aside className="w-64 bg-white shadow-md">
-        <div className="p-4 text-xl font-bold text-gray-800">Menú</div>
-        <nav className="mt-4">
-          {/* Aquí se cargará el menú dinámico */}
-          <ul className="space-y-2">
-            <li><a href="#" className="block p-2 text-gray-700 hover:bg-gray-200">Opción 1</a></li>
-            <li><a href="#" className="block p-2 text-gray-700 hover:bg-gray-200">Opción 2</a></li>
-            <li><a href="#" className="block p-2 text-gray-700 hover:bg-gray-200">Opción 3</a></li>
-          </ul>
-        </nav>
-      </aside>
+      <SideMenu menuItems={menuTree} />
 
       {/* Contenido principal */}
       <main className="flex-1 flex flex-col">
