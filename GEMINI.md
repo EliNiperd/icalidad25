@@ -53,8 +53,12 @@ El formulario de login ahora funciona correctamente, autenticando usuarios a tra
 Crear una página de dashboard para usuarios autenticados, mostrar información del usuario y cargar un menú dinámico con submenús desde la base de datos.
 
 ### Acciones Realizadas
-- **Creación de `app/dashboard/page.tsx`:** Página principal del dashboard con protección de ruta, información de usuario y botón de cerrar sesión.
-- **Configuración de Redirección:** Se añadió `defaultRedirect: "/dashboard"` en `auth.config.ts` para redirigir automáticamente tras el login.
+- **Creación de `app/icalidad/layout.tsx`:** Se movió y adaptó el layout principal del dashboard a esta nueva ubicación.
+- **Creación de `app/icalidad/dashboard/page.tsx`:** Se movió y adaptó el contenido de la página principal del dashboard a esta nueva ubicación.
+- **Creación de `app/icalidad/gerencia/page.tsx`:** Se movió y adaptó la página principal de Gerencias a esta nueva ubicación.
+- **Creación de `app/icalidad/gerencia/create/page.tsx`:** Se movió y adaptó la página de creación de Gerencias a esta nueva ubicación.
+- **Creación de `app/icalidad/gerencia/[id]/edit/page.tsx`:** Se movió y adaptó la página de edición de Gerencias a esta nueva ubicación.
+- **Configuración de Redirección:** Se actualizó `defaultRedirect: "/icalidad/dashboard"` en `auth.config.ts` para redirigir automáticamente tras el login.
 - **Creación de `lib/data/menu.ts`:** Función para llamar al SP `usp_GetMenuByEmployeeIdAndRole` y obtener los datos planos del menú.
 - **Creación de `lib/utils/menu-builder.ts`:** Función para transformar la lista plana del menú en una estructura de árbol jerárquica.
 - **Creación de `app/components/SideMenu.tsx`:** Componente cliente para renderizar el menú de forma recursiva, con manejo de submenús expandibles/colapsables.
@@ -62,22 +66,35 @@ Crear una página de dashboard para usuarios autenticados, mostrar información 
 - **Script SQL para Iconos:** Se generó `lib/database/update_menu_icons.sql` para actualizar los nombres de los iconos en la BD a los de `lucide-react`.
 
 ### Resultado
-El dashboard básico está implementado con información del usuario y un menú lateral dinámico que carga datos desde la base de datos, incluyendo la visualización de iconos de `lucide-react` o un icono por defecto con indicador.
+El dashboard básico está implementado con información del usuario y un menú lateral dinámico que carga datos desde la base de datos, incluyendo la visualización de iconos de `lucide-react` o un icono por defecto con indicador. La estructura de rutas se ha reorganizado bajo `/icalidad` para una mejor organización. La página de Gerencias ahora se integra correctamente en el layout del dashboard.
+
+---
+
+## 4. Catálogo de Gerencias (`/icalidad/gerencia`)
+
+### Problema Original
+Implementar un CRUD completo para el catálogo de Gerencias con tabla, búsqueda, paginación, ordenamiento y formulario único de creación/edición.
+
+### Acciones Realizadas
+-   **Definición de Esquema Zod:** Se creó `lib/schemas/gerencia.ts` con el esquema Zod y las interfaces TypeScript para la entidad Gerencia.
+-   **Funciones de Acceso a Datos:** Se creó `lib/data/gerencias.ts` con Server Actions para interactuar con los SPs (`PF_Gen_TGerencia`, `PI_Gen_TGerencia`, `PU_Gen_TGerencia`, `PFK_Gen_TGerencia`, `PD_Gen_TGerencia`).
+-   **Componente de Tabla Reutilizable:** Se creó `app/ui/shared/data-table.tsx` para manejar la visualización de datos, búsqueda, paginación y ordenamiento.
+-   **Componente de Paginación:** Se creó `app/ui/shared/pagination.tsx` para los controles de paginación.
+-   **Página Principal de Gerencias:** Se creó `app/icalidad/gerencia/page.tsx` (antes `app/gerencia/page.tsx`) que utiliza `GerenciaTableWrapper` para mostrar la tabla de Gerencias.
+-   **Páginas de Creación/Edición:** Se crearon `app/icalidad/gerencia/create/page.tsx` y `app/icalidad/gerencia/[id]/edit/page.tsx` (antes en `app/gerencia/...`).
+-   **Formulario Único (Creación/Edición):** Se creó `app/ui/gerencias/create-edit-form.tsx` con validaciones, flujo post-creación mejorado y botón de cancelar.
+-   **Componente de Acciones de Fila:** Se creó `app/ui/gerencias/gerencia-actions.tsx` para los botones de Editar/Eliminar.
+-   **Ajuste de Límites de Server/Client Components:** Se refactorizó la forma en que `DataTable` y `GerenciaTableWrapper` interactúan para evitar pasar funciones de Server a Client Components.
+
+### Resultado
+El CRUD básico para Gerencias está implementado, con una tabla funcional, formularios de creación/edición con validación y un flujo de usuario mejorado. La página de Gerencias se integra correctamente en el layout del dashboard.
 
 ---
 
 ## Próximos Pasos (Según Solicitud del Usuario)
 
-1.  **Catálogo de Gerencias (`/gerencia`):**
-    -   **Página Principal:** Mostrar una tabla con información de gerencias (SP: `PF_Gen_TGerencia`).
-    -   **Funcionalidades de Tabla:** Búsqueda amigable, paginación (10 elementos por defecto, ajustable), información de paginación (total de registros), ordenamiento por columnas.
-    -   **Acciones:** Botones para Crear, Editar, Eliminar.
-    -   **Formulario Único (Creación/Edición):**
-        -   Validaciones correspondientes.
-        -   Creación (SP: `PI_Gen_TGerencia`).
-        -   Edición (SP: `PU_Gen_TGerencia`).
-        -   Carga de datos para edición (SP: `PFK_Gen_TGerencia`).
-
-2.  **Catálogo de Departamentos:** (Pendiente de definición)
-3.  **Catálogo de Puestos:** (Pendiente de definición)
-4.  **Catálogo de Empleados:** (Pendiente de definición)
+1.  **Catálogo de Departamentos:** (Pendiente de definición)
+2.  **Catálogo de Puestos:** (Pendiente de definición)
+3.  **Catálogo de Empleados:** (Pendiente de definición)
+4.  **Optimización de SP `PF_Gen_TGerencia`:** Modificar el SP para que maneje paginación y ordenamiento directamente en la base de datos.
+5.  **Integración de `IdEmpleadoAlta`/`IdEmpleadoActualiza`:** Obtener el ID del usuario autenticado de la sesión para los campos de auditoría en Gerencias.

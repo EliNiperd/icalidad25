@@ -1,46 +1,89 @@
-   'use server';
-    
-    import { signIn } from '@/auth';
-    import { redirect } from 'next/navigation'; // Importar redirect de next/navigation
+'use server';
 
-    export async function authenticate(
-      prevState: string | undefined,
-      formData: FormData,
-    ): Promise<string | undefined> {
-      try {
-        await signIn('credentials', formData);
-        redirect('/dashboard'); // Esto lanzará un error interno que Next.js maneja
-      } catch (error: unknown) {
-        // Check for the internal Next.js redirect error using its 'digest' property
-        if (error && typeof error === 'object' && 'digest' in error && typeof error.digest === 'string' && error.digest.startsWith('NEXT_REDIRECT')) {
-          throw error; // Re-throw the original error to let Next.js handle the redirect
-        }
+import { signIn } from '@/auth';
+import { redirect } from 'next/navigation';
+import { decryptPassword } from '@/lib/utils/security';
+import { usegetPool, typeParameter } from "@/lib/database/connection";
 
-        let errorMessage: string = 'Ha ocurrido un error inesperado. Por favor, inténtalo más tarde.';
+interface SPAuthResult {
+  StatusCode: number;
+  Message: string;
+  IdEmpleado?: number;
+  UserName?: string;
+  Correo?: string;
+  NombreEmpleado?: string;
+  ImageEmpleado?: string | null;
+  NombreRol?: string;
+  IdRol?: number;
+}
 
-        if (error instanceof Error) {
-          // Si el error tiene una causa anidada con nuestro mensaje específico del SP
-          if (
-            'cause' in error &&
-            error.cause &&
-            typeof error.cause === 'object' &&
-            error.cause !== null &&
-            'err' in (error.cause as Record<string, unknown>) &&
-            (error.cause as any).err instanceof Error
-          ) {
-            errorMessage = (error.cause as any).err.message;
-          } else if (error.message.includes("CallbackRouteError")) {
-            errorMessage = `Credenciales inválidas. Por favor, inténtalo de nuevo.`;
-          } else {
-            errorMessage = error.message;
-          }
-        } else if (typeof error === 'object' && error !== null && 'type' in error) {
-          const err = error as { type?: unknown };
-          if (err.type === 'CredentialsSignin') {
-            errorMessage = `Credenciales inválidas. Por favor, inténtalo de nuevo.`;
-          } 
-        }
+async function validateCredentials(username: string, password: string): Promise<SPAuthResult | null> {
+  try {
+    const pool = await usegetPool("Default");
+    const request = await pool.request();
+    const typeParam = await typeParameter();
 
-        throw new Error(errorMessage);
-      }
+    request.input("p_UserName", typeParam.NVarChar(20), username);
+    request.input("p_Password", typeParam.NVarChar(20), password); 
+
+    const result = await request.execute("usp_AuthenticateUser");
+
+    if (result.recordset && result.recordset.length > 0) {
+      return result.recordset[0] as SPAuthResult;
     }
+    return { StatusCode: 99, Message: "Error: El SP no devolvió resultados." };
+  } catch (error) {
+    console.error("Failed to validate credentials:", error);
+    return { StatusCode: 99, Message: "Error interno del servidor al autenticar." };
+  }
+}
+
+export async function authenticate(
+  prevState: string | undefined,
+  formData: FormData
+): Promise<string | undefined> {
+  console.log('🔵 Action authenticate iniciada');
+  
+  const username = formData.get('username') as string;
+  let password = formData.get('password') as string;
+  const isEncrypted = formData.get('encrypted') === 'true';
+  
+  // Desencriptar la contraseña si viene encriptada
+  if (isEncrypted) {
+    try {
+      password = decryptPassword(password);
+      console.log('🔓 Contraseña desencriptada');
+    } catch (error) {
+      console.error('❌ Error al desencriptar:', error);
+      return 'Error de seguridad al procesar la contraseña';
+    }
+  }
+  
+  console.log('🔵 Username:', username);
+  
+  // Primero validar con tu SP para obtener mensajes personalizados
+  const authResult = await validateCredentials(username, password);
+  console.log('📊 Resultado de DB:', authResult);
+  
+  if (!authResult || authResult.StatusCode !== 0) {
+    const errorMessage = authResult?.Message || 'Error de autenticación';
+    console.log('❌ Error:', errorMessage);
+    return errorMessage;
+  }
+  
+  // Si la validación fue exitosa, crear la sesión con NextAuth
+  console.log('✅ Credenciales válidas, creando sesión...');
+  const result = await signIn('credentials', {
+    username,
+    password,
+    redirect: false,
+  });
+  
+  if (result?.error) {
+    console.log('❌ Error al crear sesión');
+    return 'Error al crear la sesión';
+  }
+  
+  console.log('✅ Sesión creada, redirigiendo...');
+  redirect('/icalidad/dashboard');
+}

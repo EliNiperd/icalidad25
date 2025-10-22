@@ -1,12 +1,14 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { authConfig } from "./auth.config";
+//import bcrypt from "bcrypt";
 import { z } from "zod";
 const loginSchema = z.object({
   username: z.string(),
   password: z.string(),
 });
 import { usegetPool, typeParameter } from "@/lib/database/connection";
+
 
 // Interfaz para el resultado del Stored Procedure de autenticación
 interface SPAuthResult {
@@ -21,7 +23,10 @@ interface SPAuthResult {
   IdRol?: number;
 }
 
-async function authenticateUserInDB(username: string, password: string): Promise<SPAuthResult | null> {
+export async function authenticateUserInDB(
+  username: string,
+  password: string
+): Promise<SPAuthResult | null> {
   try {
     const pool = await usegetPool("Default");
     const request = await pool.request();
@@ -29,7 +34,7 @@ async function authenticateUserInDB(username: string, password: string): Promise
 
     // Asegúrate de que los tipos y longitudes coincidan con los parámetros de tu SP
     request.input("p_UserName", typeParam.NVarChar(20), username);
-    request.input("p_Password", typeParam.NVarChar(256), password); // Usando NVarChar(256) para el hash o texto plano
+    request.input("p_Password", typeParam.NVarChar(20), password);
 
     const result = await request.execute("usp_AuthenticateUser");
 
@@ -40,7 +45,10 @@ async function authenticateUserInDB(username: string, password: string): Promise
     return { StatusCode: 99, Message: "Error: El SP no devolvió resultados." };
   } catch (error) {
     console.error("Failed to authenticate user in DB:", error);
-    return { StatusCode: 99, Message: "Error interno del servidor al autenticar." };
+    return {
+      StatusCode: 99,
+      Message: "Error interno del servidor al autenticar.",
+    };
   }
 }
 
@@ -55,43 +63,42 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
       async authorize(credentials) {
         const parsedCredentials = loginSchema.safeParse(credentials);
 
-        if (parsedCredentials.success) {
-          const { username, password } = parsedCredentials.data;
-
-          // Llamar a la nueva función que ejecuta el stored procedure
-          const authResult = await authenticateUserInDB(username, password);
-
-          if (!authResult) {
-            console.log("Authentication failed: No result from DB function.");
-            return null;
-          }
-
-          if (authResult.StatusCode === 0) {
-            // Autenticación exitosa, mapear los datos del usuario
-            if (authResult.IdEmpleado && authResult.NombreEmpleado && authResult.Correo && authResult.NombreRol && authResult.IdRol && authResult.UserName) {
-              return {
-                id: authResult.IdEmpleado.toString(),
-                name: authResult.NombreEmpleado,
-                email: authResult.Correo,
-                image: authResult.ImageEmpleado,
-                username: authResult.UserName,
-                idRol: authResult.IdRol,
-                nombreRol: authResult.NombreRol,
-              };
-            } else {
-              // Autenticación fallida con un código de estado específico
-              console.log(`Authentication failed (Code: ${authResult.StatusCode}): ${authResult.Message}`);
-              throw new Error(authResult.Message); // Lanzar el mensaje específico del SP
-            }
-          } else {
-            // Autenticación fallida con un código de estado específico
-            console.log(`Authentication failed (Code: ${authResult.StatusCode}): ${authResult.Message}`);
-            throw new Error(authResult.Message); // Lanzar el mensaje específico del SP
-          }
+        if (!parsedCredentials.success) {
+          console.log("Invalid credentials format");
+          return null;
         }
 
-        console.log("Invalid credentials format");
-        throw new Error("Formato de credenciales inválido."); // Lanzar un error para credenciales mal formadas
+        const { username, password } = parsedCredentials.data;
+        const authResult = await authenticateUserInDB(username, password);
+
+        if (!authResult || authResult.StatusCode !== 0) {
+          const errorMessage = authResult?.Message || "Error de autenticación";
+          console.log(`Authentication failed: ${errorMessage}`);
+
+
+          return null;
+        }
+
+        if (
+          authResult.IdEmpleado &&
+          authResult.NombreEmpleado &&
+          authResult.Correo &&
+          authResult.NombreRol &&
+          authResult.IdRol &&
+          authResult.UserName
+        ) {
+          return {
+            id: authResult.IdEmpleado.toString(),
+            name: authResult.NombreEmpleado,
+            email: authResult.Correo,
+            image: authResult.ImageEmpleado,
+            username: authResult.UserName,
+            idRol: authResult.IdRol,
+            nombreRol: authResult.NombreRol,
+          };
+        }
+
+        return null;
       },
     }),
   ],

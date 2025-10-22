@@ -30,7 +30,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <main className="flex-1 flex flex-col">
         {/* Barra superior con información del usuario */}
         <header className="bg-white shadow-md p-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-800">iCalidad Dashboard</h1>
+          <h1 className="text-2xl font-bold text-gray-800">iCalidad</h1>
           <div className="flex items-center space-x-4">
             {session.user && (
               <span className="text-gray-700">Bienvenido, {session.user.name || session.user.username}</span>
