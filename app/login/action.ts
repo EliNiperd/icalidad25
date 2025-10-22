@@ -42,7 +42,7 @@ export async function authenticate(
   prevState: string | undefined,
   formData: FormData
 ): Promise<string | undefined> {
-  console.log('🔵 Action authenticate iniciada');
+  //console.log('🔵 Action authenticate iniciada');
   
   const username = formData.get('username') as string;
   let password = formData.get('password') as string;
@@ -52,22 +52,22 @@ export async function authenticate(
   if (isEncrypted) {
     try {
       password = decryptPassword(password);
-      console.log('🔓 Contraseña desencriptada');
+      //console.log('🔓 Contraseña desencriptada');
     } catch (error) {
       console.error('❌ Error al desencriptar:', error);
       return 'Error de seguridad al procesar la contraseña';
     }
   }
   
-  console.log('🔵 Username:', username);
+  //console.log('🔵 Username:', username);
   
   // Primero validar con tu SP para obtener mensajes personalizados
   const authResult = await validateCredentials(username, password);
-  console.log('📊 Resultado de DB:', authResult);
+  //console.log('📊 Resultado de DB:', authResult);
   
   if (!authResult || authResult.StatusCode !== 0) {
     const errorMessage = authResult?.Message || 'Error de autenticación';
-    console.log('❌ Error:', errorMessage);
+    console.error('❌ Error:', errorMessage);
     return errorMessage;
   }
   
@@ -80,7 +80,7 @@ export async function authenticate(
   });
   
   if (result?.error) {
-    console.log('❌ Error al crear sesión');
+    console.error('❌ Error al crear sesión');
     return 'Error al crear la sesión';
   }
   

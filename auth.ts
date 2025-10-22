@@ -64,7 +64,7 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
         const parsedCredentials = loginSchema.safeParse(credentials);
 
         if (!parsedCredentials.success) {
-          console.log("Invalid credentials format");
+          console.error("Invalid credentials format");
           return null;
         }
 
@@ -73,7 +73,7 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
 
         if (!authResult || authResult.StatusCode !== 0) {
           const errorMessage = authResult?.Message || "Error de autenticación";
-          console.log(`Authentication failed: ${errorMessage}`);
+          console.error(`Authentication failed: ${errorMessage}`);
 
 
           return null;

@@ -16,9 +16,6 @@ El proyecto presentaba un error de compilación relacionado con `app/globals.css
 - **Ajuste de `postcss.config.mjs`:** Se corrigió la configuración de PostCSS para incluir correctamente `@tailwindcss/postcss` y `autoprefixer`, eliminando entradas redundantes o incorrectas.
 - **Ajuste de `app/layout.tsx`:** Se añadieron las clases `bg-background` y `text-foreground` al `<body>` para aplicar los estilos base de Tailwind.
 
-### Resultado
-El proyecto ahora compila sin errores relacionados con Tailwind CSS y PostCSS, utilizando una configuración limpia y compatible con Tailwind CSS v4.
-
 ---
 
 ## 2. Integración de Login y Manejo de Autenticación
@@ -91,6 +88,24 @@ El CRUD básico para Gerencias está implementado, con una tabla funcional, form
 
 ---
 
+## Problema Original
+No redirecciona hacia el dashboard despues de iniciar sesion, y no captura los mensajes de error de la base de datos. Se detecta que hay un bug en Next.js 14 que impide la redireccion en un bloque try-cath. 
+
+### Acciones Realizadas
+- **Ajuste de `auth.ts, auth.config.ts, app\login\action.ts y app\components\ui\login\login-form.tsx`:** Se ajustó para superar el error del bug de Next.js 13.4.4, permitiendo la redirección al dashboard tras el login exitoso. 
+- **Ajuste de `app\login\action.ts`:** Se ajustó para encriptar la contraseña con `crypto-js` en el servidor y desencriptarla en el cliente.
+
+### Resultado
+El login ahora funciona correctamente y redirecciona al dashboard despues de iniciar sesion. Y se integra la encriptacion de la contraseña en el servidor y la desencriptacion en el cliente de forma exitosa.
+
+---
+
+### Problema Original
+Al editar una Gerencia, no permite modificar el estatus mediante el checkbox. 
+
+
+---
+
 ## Próximos Pasos (Según Solicitud del Usuario)
 
 1.  **Catálogo de Departamentos:** (Pendiente de definición)
@@ -98,3 +113,6 @@ El CRUD básico para Gerencias está implementado, con una tabla funcional, form
 3.  **Catálogo de Empleados:** (Pendiente de definición)
 4.  **Optimización de SP `PF_Gen_TGerencia`:** Modificar el SP para que maneje paginación y ordenamiento directamente en la base de datos.
 5.  **Integración de `IdEmpleadoAlta`/`IdEmpleadoActualiza`:** Obtener el ID del usuario autenticado de la sesión para los campos de auditoría en Gerencias.
+6.  **Generación de una aplicación completa para apoyo de certificación ISO-9000 con los módulos de Poder Documental(Control de Documentos), Audit-Actions(Auditoría de Acciones) y Personal Competente(Control de Personal), deberá de tener todo el manejo de catálogos básicos para hacer funcional todos los módulos** (Ir incluyendo todas las definiciones) 
+
+
