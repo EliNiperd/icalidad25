@@ -44,6 +44,7 @@ export default async function GerenciaPage({ searchParams }: GerenciaPageProps) 
       </div>
       
       <Suspense fallback={<div>Cargando gerencias...</div>}>
+      <div className="p-4 bg-light-bg-secondary dark:bg-dark-bg-secondary rounded-lg shadow-sm border border-light-border-default dark:border-dark-border-default">
         <GerenciaTableWrapper
           gerencias={gerencias}
           totalRecords={totalRecords}
@@ -54,6 +55,7 @@ export default async function GerenciaPage({ searchParams }: GerenciaPageProps) 
           searchPlaceholder="Buscar por clave o nombre..."
           showRowNumber={true} // Habilitar número de renglón
         />
+        </div>
       </Suspense>
     </>
   );

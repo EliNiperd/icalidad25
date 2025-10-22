@@ -9,7 +9,7 @@ export interface Column<T> {
   key: keyof T | string;
   header: string;
   sortable?: boolean;
-  renderType?: 'estatusGerencia'; // Nuevo: para renderizado personalizado
+  renderType?: 'estatusGerencia';
 }
 
 interface DataTableProps<T> {
@@ -22,11 +22,11 @@ interface DataTableProps<T> {
   defaultSortOrder: 'asc' | 'desc';
   searchPlaceholder?: string;
   onRowClick?: (row: T) => void;
-  renderActions?: (row: T) => React.ReactNode; // Nueva prop para renderizar acciones
-  showRowNumber?: boolean; // Nueva prop para mostrar número de renglón
+  renderActions?: (row: T) => React.ReactNode;
+  showRowNumber?: boolean;
 }
 
-export function DataTable<T extends { [key: string]: any }> ({
+export function DataTable<T extends { [key: string]: any }>({
   data,
   columns,
   totalRecords,
@@ -34,18 +34,24 @@ export function DataTable<T extends { [key: string]: any }> ({
   pageSize,
   defaultSortBy,
   defaultSortOrder,
-  searchPlaceholder = "Buscar...",
+  searchPlaceholder = 'Buscar...',
   onRowClick,
-  renderActions, // Usar la nueva prop
-  showRowNumber, // Usar la nueva prop
+  renderActions,
+  showRowNumber,
 }: DataTableProps<T>) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const [searchTerm, setSearchTerm] = useState(searchParams.get('query') || '');
-  const [currentPage, setCurrentPage] = useState(Number(searchParams.get('page')) || 1);
-  const [sortBy, setSortBy] = useState(searchParams.get('sortBy') || defaultSortBy);
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>((searchParams.get('sortOrder') as 'asc' | 'desc') || defaultSortOrder);
+  const [currentPage, setCurrentPage] = useState(
+    Number(searchParams.get('page')) || 1
+  );
+  const [sortBy, setSortBy] = useState(
+    (searchParams.get('sortBy') as string) || defaultSortBy
+  );
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>(
+    ((searchParams.get('sortOrder') as 'asc' | 'desc') || defaultSortOrder)  
+  );
 
   useEffect(() => {
     const params = new URLSearchParams(searchParams.toString());
@@ -58,7 +64,7 @@ export function DataTable<T extends { [key: string]: any }> ({
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
-    setCurrentPage(1); // Reset page on new search
+    setCurrentPage(1);
   };
 
   const handleSort = (columnKey: string) => {
@@ -68,98 +74,138 @@ export function DataTable<T extends { [key: string]: any }> ({
       setSortBy(columnKey);
       setSortOrder('asc');
     }
-    setCurrentPage(1); // Reset page on sort change
+    setCurrentPage(1);
   };
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
 
-  // Función para renderizar celdas personalizadas
   const renderCell = (row: T, column: Column<T>) => {
     if (column.renderType === 'estatusGerencia') {
-      const isActivo = (row as any)[column.key]; // Asumiendo que column.key es IdEstatusGerencia (boolean)
-      const estatusText = isActivo ? 'Activo' : 'Inactivo';
+      const isActivo = Boolean((row as any)[column.key]);
       return (
-        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${isActivo ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-          {estatusText}
+        <span
+          className={`px-3 py-1 inline-flex text-xs font-semibold rounded-full ${
+            isActivo
+              ? 'bg-success/20 text-success border border-success/30'
+              : 'bg-error/20 text-error border border-error/30'
+          }`}
+        >
+          {isActivo ? 'Activo' : 'Inactivo'}
         </span>
       );
     }
-    // Renderizado por defecto
     return (row as any)[column.key];
   };
 
   return (
-    <div className="p-4 bg-white rounded-lg shadow-md">
-      <div className="flex justify-between items-center mb-4">
+    <div className="space-y-4">
+      {/* Barra de búsqueda */}
+      <div className="flex justify-between items-center">
         <Input
           type="text"
           placeholder={searchPlaceholder}
           value={searchTerm}
           onChange={handleSearch}
-          className="max-w-sm"
+          className="max-w-sm bg-bg-primary border-border-default"
         />
-        {/* Eliminamos el botón onCreateClick de aquí */}
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              {showRowNumber && (
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
-              )}
-              {columns.map((column) => (
-                <th
-                  key={String(column.key)}
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                  onClick={() => column.sortable && handleSort(String(column.key))}
-                >
-                  {column.header}
-                  {column.sortable && sortBy === column.key && (
-                    <span>{sortOrder === 'asc' ? ' ▲' : ' ▼'}</span>
-                  )}
-                </th>
-              ))}
-              {renderActions && (
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
-              )}
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {data.length === 0 ? (
+      {/* Tabla con mejor contraste */}
+      <div className="rounded-lg border-2 border-border-default bg-bg-primary shadow-lg overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y-2 divide-border-default">
+            {/* Encabezado con fondo distintivo */}
+            <thead className="bg-primary-600">
               <tr>
-                <td colSpan={columns.length + (renderActions ? 1 : 0) + (showRowNumber ? 1 : 0)} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
-                  No se encontraron registros.
-                </td>
+                {showRowNumber && (
+                  <th className="px-6 py-4 text-left text-sm font-bold text-white">
+                    #
+                  </th>
+                )}
+                {columns.map(column => (
+                  <th
+                    key={String(column.key)}
+                    onClick={() => column.sortable && handleSort(String(column.key))}
+                    className={`px-6 py-4 text-left text-sm font-bold text-white ${
+                      column.sortable
+                        ? 'cursor-pointer hover:bg-primary-700 transition-colors select-none'
+                        : ''
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      {column.header}
+                      {column.sortable && sortBy === column.key && (
+                        <span className="text-white">
+                          {sortOrder === 'asc' ? '↑' : '↓'}
+                        </span>
+                      )}
+                    </div>
+                  </th>
+                ))}
+                {renderActions && (
+                  <th className="px-6 py-4 text-left text-sm font-bold text-white">
+                    Acciones
+                  </th>
+                )}
               </tr>
-            ) : (
-              data.map((row, rowIndex) => (
-                <tr key={rowIndex} className={onRowClick ? "cursor-pointer hover:bg-gray-100" : ""} onClick={() => onRowClick && onRowClick(row)}>
-                  {showRowNumber && (
-                    <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
-                      {(currentPage - 1) * pageSize + rowIndex + 1}
-                    </td>
-                  )}
-                  {columns.map((column, colIndex) => (
-                    <td key={colIndex} className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
-                      {renderCell(row, column)}
-                    </td>
-                  ))}
-                  {renderActions && (
-                    <td className="px-6 py-3 whitespace-nowrap text-right text-sm font-medium">
-                      {renderActions(row)}
-                    </td>
-                  )}
+            </thead>
+
+            {/* Cuerpo de la tabla */}
+            <tbody className="divide-y divide-border-default bg-bg-secondary">
+              {data.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={
+                      columns.length +
+                      (renderActions ? 1 : 0) +
+                      (showRowNumber ? 1 : 0)
+                    }
+                    className="p-24 text-center text-text-secondary"
+                  >
+                    <div className="flex flex-col items-center gap-2">
+                      <span className="text-4xl">📋</span>
+                      <span className="font-medium">No se encontraron registros</span>
+                    </div>
+                  </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                data.map((row, rowIndex) => (
+                  <tr
+                    key={rowIndex}
+                    onClick={() => onRowClick && onRowClick(row)}
+                    className={`transition-all duration-150 hover:bg-primary-100 dark:hover:bg-primary-900/30 hover:shadow-sm ${
+                      onRowClick ? 'cursor-pointer' : ''
+                    }`}
+                  >
+                    {showRowNumber && (
+                      <td className="px-6 py-4 text-sm font-medium text-text-secondary whitespace-nowrap">
+                        {(currentPage - 1) * pageSize + rowIndex + 1}
+                      </td>
+                    )}
+                    {columns.map((column, colIndex) => (
+                      <td
+                        key={colIndex}
+                        className="px-6 py-4 text-sm text-text-primary whitespace-nowrap"
+                      >
+                        {renderCell(row, column)}
+                      </td>
+                    ))}
+                    {renderActions && (
+                      <td className="px-6 py-4 text-right text-sm font-medium">
+                        {renderActions(row)}
+                      </td>
+                    )}
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
+      {/* Paginación */}
       <PaginationControls
         currentPage={currentPage}
         totalPages={totalPages}
@@ -170,6 +216,3 @@ export function DataTable<T extends { [key: string]: any }> ({
     </div>
   );
 }
-
-
-

@@ -7,12 +7,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { createGerencia, updateGerencia } from '@/lib/data/gerencias'; // Importar las Server Actions
+import { createGerencia, updateGerencia } from '@/lib/data/gerencias';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { AlertCircle, CheckCircle2, Save, X, Plus, List } from 'lucide-react';
 
 interface GerenciaFormProps {
-  gerencia?: GerenciaFormData; // Opcional para edición
+  gerencia?: GerenciaFormData;
 }
 
 export default function GerenciaForm({ gerencia }: GerenciaFormProps) {
@@ -20,8 +21,14 @@ export default function GerenciaForm({ gerencia }: GerenciaFormProps) {
   const [formError, setFormError] = useState<string | null>(null);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
-  
-  const { register, handleSubmit, reset, setValue, control, formState: { errors, isSubmitting } } = useForm<GerenciaFormData>({
+  const { 
+    register, 
+    handleSubmit, 
+    reset, 
+    setValue, 
+    control, 
+    formState: { errors, isSubmitting } 
+  } = useForm<GerenciaFormData>({
     resolver: zodResolver(GerenciaFormSchema) as Resolver<GerenciaFormData>,
     defaultValues: gerencia || {
       ClaveGerencia: '',
@@ -38,26 +45,24 @@ export default function GerenciaForm({ gerencia }: GerenciaFormProps) {
     try {
       let result;
       if (gerencia?.IdGerencia) {
-        // Edición
         result = await updateGerencia(gerencia.IdGerencia, data);
       } else {
-        // Creación
         result = await createGerencia(data);
       }
 
       if (result.Resultado < 0) {
         setFormError(result.Mensaje);
       } else {
-        if (!gerencia?.IdGerencia) { // Solo para creación
+        if (!gerencia?.IdGerencia) {
           setShowSuccessMessage(true);
-          reset({ // Limpiar el formulario para una nueva entrada
+          reset({
             ClaveGerencia: '',
             NombreGerencia: '',
             IdEstatusGerencia: true,
           });
         } else {
-          router.push('/icalidad/gerencia'); // Redirigir a la tabla después de editar
-          router.refresh(); // Refrescar los datos de la tabla
+          router.push('/icalidad/gerencia');
+          router.refresh();
         }
       }
     } catch (error) {
@@ -72,7 +77,6 @@ export default function GerenciaForm({ gerencia }: GerenciaFormProps) {
 
   const handleCreateAnother = () => {
     setShowSuccessMessage(false);
-    // El formulario ya se reseteó en onSubmit
   };
 
   const handleGoToList = () => {
@@ -81,56 +85,182 @@ export default function GerenciaForm({ gerencia }: GerenciaFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 p-4 bg-white rounded-lg shadow-md max-w-lg mx-auto">
-      {formError && <p className="text-red-500 text-sm text-center">{formError}</p>}
-      {showSuccessMessage && (
-        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
-          <strong className="font-bold">¡Éxito!</strong>
-          <span className="block sm:inline"> La gerencia se ha creado correctamente.</span>
-          <div className="mt-2 flex justify-center space-x-4">
-            <Button type="button" onClick={handleCreateAnother}>Crear Otra</Button>
-            <Button type="button" onClick={handleGoToList} variant="outline">Ir al Listado</Button>
+    <div className="max-w-xl mx-auto">
+      {/* Header del formulario */}
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold text-text-primary">
+          {gerencia?.IdGerencia ? 'Editar Gerencia' : 'Nueva Gerencia'}
+        </h2>
+        <p className="text-sm text-text-secondary mt-1">
+          {gerencia?.IdGerencia 
+            ? 'Actualiza la información de la gerencia' 
+            : 'Completa los datos para crear una nueva gerencia'
+          }
+        </p>
+      </div>
+
+      {/* Mensaje de error */}
+      {formError && (
+        <div className="mb-6 bg-error/10 border-2 border-error rounded-lg p-4 flex items-start gap-3">
+          <AlertCircle className="h-5 w-5 text-error flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="font-semibold text-error">Error al guardar</p>
+            <p className="text-sm text-error/90 mt-1">{formError}</p>
           </div>
         </div>
       )}
 
-      <div>
-        <Label htmlFor="ClaveGerencia">Clave de Gerencia</Label>
-        <Input
-          id="ClaveGerencia"
-          {...register("ClaveGerencia")}
-          className="mt-1 block w-full"
-          //disabled={!!gerencia?.IdGerencia} // Deshabilitar en edición
-        />
-        {errors.ClaveGerencia && <p className="text-red-500 text-sm mt-1">{errors.ClaveGerencia.message}</p>}
-      </div>
+      {/* Mensaje de éxito */}
+      {showSuccessMessage && (
+        <div className="mb-6 bg-success/10 border-2 border-success rounded-lg p-4">
+          <div className="flex items-start gap-3 mb-4">
+            <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="font-semibold text-success">¡Gerencia creada exitosamente!</p>
+              <p className="text-sm text-success/90 mt-1">
+                La gerencia se ha registrado correctamente en el sistema.
+              </p>
+            </div>
+          </div>
+          <div className="flex justify-center gap-3">
+            <Button 
+              type="button" 
+              onClick={handleCreateAnother}
+              className="bg-primary-600 hover:bg-primary-700 text-white"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Crear Otra
+            </Button>
+            <Button 
+              type="button" 
+              onClick={handleGoToList} 
+              variant="outline"
+              className="border-border-default"
+            >
+              <List className="h-4 w-4 mr-2" />
+              Ir al Listado
+            </Button>
+          </div>
+        </div>
+      )}
 
-      <div>
-        <Label htmlFor="NombreGerencia">Nombre de Gerencia</Label>
-        <Input
-          id="NombreGerencia"
-          {...register("NombreGerencia")}
-          className="mt-1 block w-full"
-        />
-        {errors.NombreGerencia && <p className="text-red-500 text-sm mt-1">{errors.NombreGerencia.message}</p>}
-      </div>
+      {/* Formulario */}
+      <form 
+        onSubmit={handleSubmit(onSubmit)} 
+        className="bg-bg-secondary border-2 border-border-default rounded-lg shadow-lg p-6 space-y-6 "
+      >
+        {/* Campo: Clave de Gerencia */}
+        <div className="space-y-2">
+          <Label 
+            htmlFor="ClaveGerencia" 
+            className="text-text-primary font-semibold"
+          >
+            Clave de Gerencia
+            <span className="text-error ml-1">*</span>
+          </Label>
+          <Input
+            id="ClaveGerencia"
+            {...register("ClaveGerencia")}
+            className="bg-bg-primary border-border-default text-text-primary placeholder:text-text-secondary/50"
+            placeholder="Ej: G-01"
+          />
+          {errors.ClaveGerencia && (
+            <p className="text-error text-sm flex items-center gap-1">
+              <AlertCircle className="h-3.5 w-3.5" />
+              {errors.ClaveGerencia.message}
+            </p>
+          )}
+        </div>
 
-      <div className="flex items-center space-x-2">
-        <Checkbox
-        id="IdEstatusGerencia"
-        {...register("IdEstatusGerencia")}
-        checked={isEstatusChecked} // Usar useWatch para controlar el estado
-        onCheckedChange={(checked) => setValue("IdEstatusGerencia", Boolean(checked))}
-      />
-        <Label htmlFor="IdEstatusGerencia">Activo</Label>
-      </div>
+        {/* Campo: Nombre de Gerencia */}
+        <div className="space-y-2">
+          <Label 
+            htmlFor="NombreGerencia" 
+            className="text-text-primary font-semibold"
+          >
+            Nombre de Gerencia
+            <span className="text-error ml-1">*</span>
+          </Label>
+          <Input
+            id="NombreGerencia"
+            {...register("NombreGerencia")}
+            className="bg-bg-primary border-border-default text-text-primary placeholder:text-text-secondary/50"
+            placeholder="Ej: Gerencia de Operaciones"
+          />
+          {errors.NombreGerencia && (
+            <p className="text-error text-sm flex items-center gap-1">
+              <AlertCircle className="h-3.5 w-3.5" />
+              {errors.NombreGerencia.message}
+            </p>
+          )}
+        </div>
 
-      <div className="flex justify-end space-x-4 mt-6">
-        <Button type="button" variant="outline" onClick={handleCancel}>Cancelar</Button>
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Guardando...' : gerencia?.IdGerencia ? 'Actualizar Gerencia' : 'Crear Gerencia'}
-        </Button>
-      </div>
-    </form>
+        {/* Campo: Estado */}
+        <div className="bg-bg-primary border border-border-default rounded-lg p-4">
+          <div className="flex items-center space-x-3">
+            <Checkbox
+              id="IdEstatusGerencia"
+              {...register("IdEstatusGerencia")}
+              checked={isEstatusChecked}
+              onCheckedChange={(checked) => setValue("IdEstatusGerencia", Boolean(checked))}
+            />
+            <div className="flex-1">
+              <Label 
+                htmlFor="IdEstatusGerencia" 
+                className="text-text-primary font-semibold cursor-pointer"
+              >
+                Gerencia Activa
+              </Label>
+              <p className="text-xs text-text-secondary mt-0.5">
+                {isEstatusChecked 
+                  ? 'La gerencia está activa y visible en el sistema' 
+                  : 'La gerencia está inactiva y no será visible'
+                }
+              </p>
+            </div>
+            <span 
+              className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                isEstatusChecked 
+                  ? 'bg-success/20 text-success border border-success/30' 
+                  : 'bg-error/20 text-error border border-error/30'
+              }`}
+            >
+              {isEstatusChecked ? 'Activo' : 'Inactivo'}
+            </span>
+          </div>
+        </div>
+
+        {/* Botones de acción */}
+        <div className="flex justify-end gap-3 pt-4 border-t border-border-default">
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={handleCancel}
+            className="border-border-default hover:bg-bg-primary"
+            disabled={isSubmitting}
+          >
+            <X className="h-4 w-4 mr-2" />
+            Cancelar
+          </Button>
+          <Button 
+            type="submit" 
+            disabled={isSubmitting}
+            className="bg-primary-600 hover:bg-primary-700 text-white"
+          >
+            {isSubmitting ? (
+              <>
+                <div className="h-4 w-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                Guardando...
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4 mr-2" />
+                {gerencia?.IdGerencia ? 'Actualizar Gerencia' : 'Crear Gerencia'}
+              </>
+            )}
+          </Button>
+        </div>
+      </form>
+    </div>
   );
 }

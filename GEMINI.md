@@ -87,7 +87,7 @@ Implementar un CRUD completo para el catálogo de Gerencias con tabla, búsqueda
 -   **Componente de Acciones de Fila:** Se creó `app/ui/gerencias/gerencia-actions.tsx` para los botones de Editar/Eliminar.
 -   **Ajuste de Límites de Server/Client Components:** Se refactorizó la forma en que `DataTable` y `GerenciaTableWrapper` interactúan para evitar pasar funciones de Server a Client Components.
 -   **Corrección de Edición de Estatus:** Se ajustó `app/ui/gerencias/create-edit-form.tsx` para que el checkbox `IdEstatusGerencia` cargue correctamente el valor de la base de datos.
--   **Corrección de Búsqueda:** Se modificó el SP `PF_Gen_TGerencia` (a través de `lib/database/update_pf_gen_tgerencia.sql`) para que la búsqueda por clave o nombre funcione con un `OR` lógico.
+-   **Corrección de Búsqueda:** Se modificó el SP `PF_Gen_TGerencia` (a través de `lib/database/optimize_pf_gen_tgerencia.sql`) para que la búsqueda por clave, nombre o estatus funcione con un `OR` lógico.
 -   **Número de Renglón en Tabla:** Se añadió la funcionalidad de número de renglón personalizable a `app/ui/shared/data-table.tsx` y se habilitó en la tabla de Gerencias.
 
 ### Resultado

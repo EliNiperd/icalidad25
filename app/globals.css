@@ -1,6 +1,74 @@
 @import "tailwindcss";
 
-body {
-  background-color: #ffffff;
-  color: #000000;
+@theme {
+  /* Primary colors */
+  --color-primary-50: #eef3f5;
+  --color-primary-100: #cde0e7;
+  --color-primary-200: #a5cbdb;
+  --color-primary-300: #75b9d5;
+  --color-primary-400: #4bafd7;
+  --color-primary-500: #2da9dc;
+  --color-primary-600: #199ed4;
+  --color-primary-700: #1185b5;
+  --color-primary-800: #0b6b93;
+  --color-primary-900: #065170;
+  --color-primary-950: #034059;
+
+  /* Secondary colors */
+  --color-secondary-50: #a1c1cc;
+  --color-secondary-100: #7cb2c4;
+  --color-secondary-200: #53a3be;
+  --color-secondary-300: #3398ba;
+  --color-secondary-400: #218cb1;
+  --color-secondary-500: #167ea1;
+  --color-secondary-600: #0c6e8e;
+  --color-secondary-700: #085b77;
+  --color-secondary-800: #044960;
+  --color-secondary-900: #013547;
+  --color-secondary-950: #002836;
+
+  /* Semantic colors */
+  --color-success: #059669;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+  --color-info: #2196c5;
+
+  /* Background colors - Light mode (default) */
+  --color-bg-primary: #fafbfc;
+  --color-bg-secondary: #f3f5f7;
+  
+  /* Text colors - Light mode (default) */
+  --color-text-primary: #1e2328;
+  --color-text-secondary: #46505a;
+  
+  /* Border colors - Light mode (default) */
+  --color-border-default: #c8d2dc;
+}
+
+@layer base {
+  /* Dark mode overrides */
+  :root.dark {
+    --color-bg-primary: #12161c;
+    --color-bg-secondary: #192028;
+    --color-text-primary: #f0f2f5;
+    --color-text-secondary: #c8cdd2;
+    --color-border-default: #3c4855;
+  }
+
+  body {
+    @apply bg-bg-primary text-text-primary;
+    transition: background-color 0.2s, color 0.2s;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply text-text-primary;
+  }
+
+  a {
+    @apply text-primary-600 hover:text-primary-700;
+  }
+  
+  :root.dark a {
+    @apply text-primary-400 hover:text-primary-300;
+  }
 }

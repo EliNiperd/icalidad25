@@ -41,7 +41,7 @@ async function validateCredentials(username: string, password: string): Promise<
 export async function authenticate(
   prevState: string | undefined,
   formData: FormData
-): Promise<string | undefined> {
+): Promise<void> { // Se cambia el retorno a void, ya que solo lanzará errores o redirigirá
   //console.log('🔵 Action authenticate iniciada');
   
   const username = formData.get('username') as string;
@@ -55,7 +55,7 @@ export async function authenticate(
       //console.log('🔓 Contraseña desencriptada');
     } catch (error) {
       console.error('❌ Error al desencriptar:', error);
-      return 'Error de seguridad al procesar la contraseña';
+      throw new Error('Error de seguridad al procesar la contraseña');
     }
   }
   
@@ -68,20 +68,21 @@ export async function authenticate(
   if (!authResult || authResult.StatusCode !== 0) {
     const errorMessage = authResult?.Message || 'Error de autenticación';
     console.error('❌ Error:', errorMessage);
-    return errorMessage;
+    throw new Error(errorMessage); // LANZAR el error
   }
   
   // Si la validación fue exitosa, crear la sesión con NextAuth
   console.log('✅ Credenciales válidas, creando sesión...');
-  const result = await signIn('credentials', {
-    username,
-    password,
-    redirect: false,
-  });
-  
-  if (result?.error) {
-    console.error('❌ Error al crear sesión');
-    return 'Error al crear la sesión';
+  try {
+    await signIn('credentials', {
+      username,
+      password,
+      redirect: false,
+    });
+  } catch (error) {
+    // Capturar errores de signIn, aunque la validación previa debería prevenirlos
+    console.error('❌ Error al crear sesión con signIn:', error);
+    throw new Error('Error interno al iniciar sesión.');
   }
   
   console.log('✅ Sesión creada, redirigiendo...');
