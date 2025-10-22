@@ -16,36 +16,21 @@ export async function getGerencias(
     const request = await pool.request();
     const typeParam = await typeParameter();
 
-    // NOTA: Tu SP actual PF_Gen_TGerencia no tiene parámetros de paginación/ordenamiento.
-    // Necesitarás modificarlo para incluir @p_PageNumber, @p_PageSize, @p_SortBy, @p_SortOrder.
-    // Por ahora, solo pasaremos los filtros de búsqueda.
-    
-    request.input("p_ClaveGerencia", typeParam.NVarChar(50), query); // Pasar query directamente
-    request.input("p_NombreGerencia", typeParam.NVarChar(100), query); // Pasar query directamente
+    // Parámetros para el SP PF_Gen_TGerencia optimizado
+    request.input("p_SearchQuery", typeParam.NVarChar(100), query || null); // Nuevo parámetro de búsqueda
     request.input("p_IdEstatus", typeParam.NVarChar(5), '%'); // Obtener todos los estatus por defecto
+    request.input("p_PageNumber", typeParam.Int, currentPage);
+    request.input("p_PageSize", typeParam.Int, pageSize);
+    request.input("p_SortBy", typeParam.NVarChar(50), sortBy);
+    request.input("p_SortOrder", typeParam.NVarChar(4), sortOrder.toUpperCase());
 
     const result = await request.execute("PF_Gen_TGerencia");
 
-    // NOTA: La paginación y el total de páginas/registros se calcularán aquí en el backend
-    // o tu SP debería devolverlos. Por ahora, simularemos.
-    const allGerencias = result.recordset as Gerencia[];
-    const totalRecords = allGerencias.length;
+    const gerencias = result.recordset as Gerencia[];
+    const totalRecords = gerencias.length > 0 ? (gerencias[0] as any).TotalRecords : 0; // Leer TotalRecords del primer registro
     const totalPages = Math.ceil(totalRecords / pageSize);
 
-    // Simulación de paginación y ordenamiento en el backend (idealmente el SP lo haría)
-    const sortedGerencias = allGerencias.sort((a, b) => {
-      const aValue = (a as any)[sortBy];
-      const bValue = (b as any)[sortBy];
-      if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
-      if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
-      return 0;
-    });
-
-    const startIndex = (currentPage - 1) * pageSize;
-    const endIndex = startIndex + pageSize;
-    const paginatedGerencias = sortedGerencias.slice(startIndex, endIndex);
-
-    return { gerencias: paginatedGerencias, totalPages, totalRecords };
+    return { gerencias, totalPages, totalRecords };
   } catch (error) {
     console.error("Failed to fetch gerencias:", error);
     return { gerencias: [], totalPages: 0, totalRecords: 0 };
