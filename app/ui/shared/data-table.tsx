@@ -23,7 +23,7 @@ interface DataTableProps<T> {
   searchPlaceholder?: string;
   onRowClick?: (row: T) => void;
   renderActions?: (row: T) => React.ReactNode; // Nueva prop para renderizar acciones
-  rowNumber?: boolean; // Nuevo: para mostrar el número de fila
+  showRowNumber?: boolean; // Nueva prop para mostrar número de renglón
 }
 
 export function DataTable<T extends { [key: string]: any }> ({
@@ -37,6 +37,7 @@ export function DataTable<T extends { [key: string]: any }> ({
   searchPlaceholder = "Buscar...",
   onRowClick,
   renderActions, // Usar la nueva prop
+  showRowNumber, // Usar la nueva prop
 }: DataTableProps<T>) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -105,13 +106,15 @@ export function DataTable<T extends { [key: string]: any }> ({
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
-            <tr className="divide-x divide-gray-200  ">
+            <tr>
+              {showRowNumber && (
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
+              )}
               {columns.map((column) => (
-                
                 <th
                   key={String(column.key)}
                   scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer  "
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                   onClick={() => column.sortable && handleSort(String(column.key))}
                 >
                   {column.header}
@@ -128,20 +131,25 @@ export function DataTable<T extends { [key: string]: any }> ({
           <tbody className="bg-white divide-y divide-gray-200">
             {data.length === 0 ? (
               <tr>
-                <td colSpan={columns.length + (renderActions ? 1 : 0)} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
+                <td colSpan={columns.length + (renderActions ? 1 : 0) + (showRowNumber ? 1 : 0)} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
                   No se encontraron registros.
                 </td>
               </tr>
             ) : (
               data.map((row, rowIndex) => (
-                <tr key={rowIndex} className={onRowClick ? "cursor-pointer hover:bg-gray-300" : " hover:bg-gray-100"} onClick={() => onRowClick && onRowClick(row)}>
+                <tr key={rowIndex} className={onRowClick ? "cursor-pointer hover:bg-gray-100" : ""} onClick={() => onRowClick && onRowClick(row)}>
+                  {showRowNumber && (
+                    <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
+                      {(currentPage - 1) * pageSize + rowIndex + 1}
+                    </td>
+                  )}
                   {columns.map((column, colIndex) => (
-                    <td key={colIndex} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 ">
+                    <td key={colIndex} className="px-6 py-3 whitespace-nowrap text-sm text-gray-900">
                       {renderCell(row, column)}
                     </td>
                   ))}
                   {renderActions && (
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <td className="px-6 py-3 whitespace-nowrap text-right text-sm font-medium">
                       {renderActions(row)}
                     </td>
                   )}
@@ -162,5 +170,6 @@ export function DataTable<T extends { [key: string]: any }> ({
     </div>
   );
 }
+
 
 

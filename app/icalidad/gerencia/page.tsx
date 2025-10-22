@@ -31,8 +31,9 @@ export default async function GerenciaPage({ searchParams }: GerenciaPageProps) 
 
   return (
     <>
-      <h1 className="text-3xl font-bold mb-6">Gestión de Gerencias</h1>
-      <div className="flex justify-end mb-4">
+    <div className="flex justify-between items-center mx-auto py-2">
+      <h1 className=" text-3xl font-bold  ">Gestión de Gerencias</h1>
+      <div >
         <Link href="/icalidad/gerencia/create">
           <Button>
             <Plus className="w-5" />
@@ -40,6 +41,8 @@ export default async function GerenciaPage({ searchParams }: GerenciaPageProps) 
           </Button>
         </Link>
       </div>
+      </div>
+      
       <Suspense fallback={<div>Cargando gerencias...</div>}>
         <GerenciaTableWrapper
           gerencias={gerencias}
@@ -49,6 +52,7 @@ export default async function GerenciaPage({ searchParams }: GerenciaPageProps) 
           defaultSortBy={sortBy}
           defaultSortOrder={sortOrder}
           searchPlaceholder="Buscar por clave o nombre..."
+          showRowNumber={true} // Habilitar número de renglón
         />
       </Suspense>
     </>

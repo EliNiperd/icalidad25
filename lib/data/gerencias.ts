@@ -16,12 +16,12 @@ export async function getGerencias(
     const request = await pool.request();
     const typeParam = await typeParameter();
 
-    // Parámetros para el SP PF_Gen_TGerencia (asumiendo que puede manejar paginación y ordenamiento)
     // NOTA: Tu SP actual PF_Gen_TGerencia no tiene parámetros de paginación/ordenamiento.
     // Necesitarás modificarlo para incluir @p_PageNumber, @p_PageSize, @p_SortBy, @p_SortOrder.
     // Por ahora, solo pasaremos los filtros de búsqueda.
-    request.input("p_ClaveGerencia", typeParam.NVarChar(50), `%${query}%`);
-    request.input("p_NombreGerencia", typeParam.NVarChar(100), `%${query}%`);
+    
+    request.input("p_ClaveGerencia", typeParam.NVarChar(50), query); // Pasar query directamente
+    request.input("p_NombreGerencia", typeParam.NVarChar(100), query); // Pasar query directamente
     request.input("p_IdEstatus", typeParam.NVarChar(5), '%'); // Obtener todos los estatus por defecto
 
     const result = await request.execute("PF_Gen_TGerencia");

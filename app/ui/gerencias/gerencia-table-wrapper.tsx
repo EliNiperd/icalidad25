@@ -1,7 +1,6 @@
 'use client';
 
-import { DataTable } from '@/app/ui/shared/data-table';
-import type { Column } from '@/app/ui/shared/data-table';
+import { DataTable, type Column } from '@/app/ui/shared/data-table';
 import { Gerencia } from '@/lib/schemas/gerencia';
 import GerenciaActions from './gerencia-actions';
 
@@ -13,6 +12,7 @@ interface GerenciaTableWrapperProps {
   defaultSortBy: string;
   defaultSortOrder: 'asc' | 'desc';
   searchPlaceholder?: string;
+  showRowNumber?: boolean; // Nueva prop
 }
 
 export default function GerenciaTableWrapper({
@@ -23,6 +23,7 @@ export default function GerenciaTableWrapper({
   defaultSortBy,
   defaultSortOrder,
   searchPlaceholder,
+  showRowNumber, // Usar la nueva prop
 }: GerenciaTableWrapperProps) {
 
   const columns: Column<Gerencia>[] = [
@@ -34,6 +35,7 @@ export default function GerenciaTableWrapper({
       sortable: true,
       renderType: 'estatusGerencia',
     },
+    
   ];
 
   return (
@@ -47,6 +49,7 @@ export default function GerenciaTableWrapper({
       defaultSortOrder={defaultSortOrder}
       searchPlaceholder={searchPlaceholder}
       renderActions={(row: Gerencia) => <GerenciaActions idGerencia={row.IdGerencia} />}
+      showRowNumber={showRowNumber} // Pasar la prop a DataTable
     />
   );
 }

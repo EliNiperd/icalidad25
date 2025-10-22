@@ -1,6 +1,6 @@
 'use client';
 
-import { useForm, type Resolver } from 'react-hook-form';
+import { useForm, useWatch, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { GerenciaFormSchema, GerenciaFormData } from '@/lib/schemas/gerencia';
 import { Input } from '@/components/ui/input';
@@ -21,7 +21,7 @@ export default function GerenciaForm({ gerencia }: GerenciaFormProps) {
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
   
-  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<GerenciaFormData>({
+  const { register, handleSubmit, reset, setValue, control, formState: { errors, isSubmitting } } = useForm<GerenciaFormData>({
     resolver: zodResolver(GerenciaFormSchema) as Resolver<GerenciaFormData>,
     defaultValues: gerencia || {
       ClaveGerencia: '',
@@ -29,6 +29,8 @@ export default function GerenciaForm({ gerencia }: GerenciaFormProps) {
       IdEstatusGerencia: true,
     },
   });
+
+  const isEstatusChecked = useWatch({ control, name: "IdEstatusGerencia" });
 
   const onSubmit = async (data: GerenciaFormData) => {
     setFormError(null);
@@ -98,7 +100,7 @@ export default function GerenciaForm({ gerencia }: GerenciaFormProps) {
           id="ClaveGerencia"
           {...register("ClaveGerencia")}
           className="mt-1 block w-full"
-          disabled={!!gerencia?.IdGerencia} // Deshabilitar en edición
+          //disabled={!!gerencia?.IdGerencia} // Deshabilitar en edición
         />
         {errors.ClaveGerencia && <p className="text-red-500 text-sm mt-1">{errors.ClaveGerencia.message}</p>}
       </div>
@@ -115,11 +117,11 @@ export default function GerenciaForm({ gerencia }: GerenciaFormProps) {
 
       <div className="flex items-center space-x-2">
         <Checkbox
-          id="IdEstatusGerencia"
-          {...register("IdEstatusGerencia")}
-          checked={gerencia?.IdEstatusGerencia}
-          onCheckedChange={(checked) => register("IdEstatusGerencia").onChange({ target: { value: checked } })}
-        />
+        id="IdEstatusGerencia"
+        {...register("IdEstatusGerencia")}
+        checked={isEstatusChecked} // Usar useWatch para controlar el estado
+        onCheckedChange={(checked) => setValue("IdEstatusGerencia", Boolean(checked))}
+      />
         <Label htmlFor="IdEstatusGerencia">Activo</Label>
       </div>
 
