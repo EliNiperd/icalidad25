@@ -180,20 +180,20 @@ export function DataTable<T extends { [key: string]: any }>({
                     }`}
                   >
                     {showRowNumber && (
-                      <td className="px-6 py-4 text-sm font-medium text-text-secondary whitespace-nowrap">
+                      <td className="px-6 py-3 text-sm font-medium text-text-secondary whitespace-nowrap">
                         {(currentPage - 1) * pageSize + rowIndex + 1}
                       </td>
                     )}
                     {columns.map((column, colIndex) => (
                       <td
                         key={colIndex}
-                        className="px-6 py-4 text-sm text-text-primary whitespace-nowrap"
+                        className="px-6 py-3 text-sm text-text-primary whitespace-nowrap"
                       >
                         {renderCell(row, column)}
                       </td>
                     ))}
                     {renderActions && (
-                      <td className="px-6 py-4 text-right text-sm font-medium">
+                      <td className="px-6 py-3 text-right text-sm font-medium">
                         {renderActions(row)}
                       </td>
                     )}

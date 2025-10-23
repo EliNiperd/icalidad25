@@ -18,8 +18,8 @@ export const GerenciaFormSchema = z.object({
   IdGerencia: z.number().optional(), // Opcional para creación, requerido para edición
   ClaveGerencia: z.string()
     .min(1, { message: "La clave de gerencia es requerida." })
-    .max(40, { message: "La clave de gerencia no debe exceder los 40 caracteres." })
-    .length(3, { message: "La clave de gerencia debe ser de 3 caracteres." }), // Según tu especificación de 3 posiciones
+    .max(40, { message: "La clave de gerencia no debe exceder los 40 caracteres." }),
+    //.length(5, { message: "La clave de gerencia debe ser de 5 caracteres." }), // Según tu especificación de 3 posiciones
   NombreGerencia: z.string()
     .min(1, { message: "El nombre de gerencia es requerido." })
     .max(100, { message: "El nombre de gerencia no debe exceder los 100 caracteres." }),

@@ -32,6 +32,7 @@
   --color-warning: #f59e0b;
   --color-error: #ef4444;
   --color-info: #2196c5;
+  --color-destructive: #ef4444;
 
   /* Background colors - Light mode (default) */
   --color-bg-primary: #fafbfc;
@@ -71,4 +72,5 @@
   :root.dark a {
     @apply text-primary-400 hover:text-primary-300;
   }
+ 
 }

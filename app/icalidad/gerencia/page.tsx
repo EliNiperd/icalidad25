@@ -35,7 +35,7 @@ export default async function GerenciaPage({ searchParams }: GerenciaPageProps) 
       <h1 className=" text-3xl font-bold  ">Gestión de Gerencias</h1>
       <div >
         <Link href="/icalidad/gerencia/create">
-          <Button>
+          <Button className="bg-primary-500 border border-primary-500 hover:bg-primary-600 text-white dark:hover:bg-primary-700 ">
             <Plus className="w-5" />
             <span className="hidden md:block">Crear Gerencia</span>
           </Button>
@@ -44,7 +44,7 @@ export default async function GerenciaPage({ searchParams }: GerenciaPageProps) 
       </div>
       
       <Suspense fallback={<div>Cargando gerencias...</div>}>
-      <div className="p-4 bg-light-bg-secondary dark:bg-dark-bg-secondary rounded-lg shadow-sm border border-light-border-default dark:border-dark-border-default">
+      <div className="p-3 bg-light-bg-secondary dark:bg-dark-bg-secondary rounded-lg shadow-sm border border-light-border-default dark:border-dark-border-default">
         <GerenciaTableWrapper
           gerencias={gerencias}
           totalRecords={totalRecords}

@@ -1,7 +1,34 @@
 'use server';
 
+import { auth } from "@/auth";
 import { usegetPool, typeParameter } from "@/lib/database/connection";
 import { Gerencia, GerenciaFormData, GerenciaSPResult } from "@/lib/schemas/gerencia";
+import { revalidatePath } from "next/cache";
+
+// Interfaz para la lista de gerencias (para dropdowns)
+export interface GerenciaListItem {
+  IdGerencia: number;
+  NombreGerencia: string;
+}
+
+// Función para obtener una lista simple de gerencias activas
+export async function getGerenciasList(): Promise<GerenciaListItem[]> {
+  try {
+    const pool = await usegetPool("Default");
+    const request = await pool.request();
+    // Ejecuta una consulta simple para obtener solo las gerencias activas
+    const result = await request.query(`
+      SELECT IdGerencia, NombreGerencia 
+      FROM Gen_TGerencia 
+      WHERE IdEstatusGerencia = 1 
+      ORDER BY NombreGerencia ASC
+    `);
+    return result.recordset as GerenciaListItem[];
+  } catch (error) {
+    console.error("Failed to fetch gerencias list:", error);
+    return [];
+  }
+}
 
 // Función para obtener todas las gerencias con filtros, paginación y ordenamiento
 export async function getGerencias(
@@ -16,9 +43,8 @@ export async function getGerencias(
     const request = await pool.request();
     const typeParam = await typeParameter();
 
-    // Parámetros para el SP PF_Gen_TGerencia optimizado
-    request.input("p_SearchQuery", typeParam.NVarChar(100), query || null); // Nuevo parámetro de búsqueda
-    request.input("p_IdEstatus", typeParam.NVarChar(5), '%'); // Obtener todos los estatus por defecto
+    request.input("p_SearchQuery", typeParam.NVarChar(100), query || null);
+    request.input("p_IdEstatus", typeParam.NVarChar(5), '%');
     request.input("p_PageNumber", typeParam.Int, currentPage);
     request.input("p_PageSize", typeParam.Int, pageSize);
     request.input("p_SortBy", typeParam.NVarChar(50), sortBy);
@@ -27,7 +53,7 @@ export async function getGerencias(
     const result = await request.execute("PF_Gen_TGerencia");
 
     const gerencias = result.recordset as Gerencia[];
-    const totalRecords = gerencias.length > 0 ? (gerencias[0] as any).TotalRecords : 0; // Leer TotalRecords del primer registro
+    const totalRecords = gerencias.length > 0 ? (gerencias[0] as any).TotalRecords : 0;
     const totalPages = Math.ceil(totalRecords / pageSize);
 
     return { gerencias, totalPages, totalRecords };
@@ -50,7 +76,6 @@ export async function getGerenciaById(id: number): Promise<GerenciaFormData | nu
 
     if (result.recordset && result.recordset.length > 0) {
       const gerencia = result.recordset[0];
-      // Mapear los campos para que coincidan con GerenciaFormData
       return {
         IdGerencia: gerencia.IdGerencia,
         ClaveGerencia: gerencia.ClaveGerencia,
@@ -67,6 +92,13 @@ export async function getGerenciaById(id: number): Promise<GerenciaFormData | nu
 
 // Función para crear una nueva gerencia
 export async function createGerencia(data: GerenciaFormData): Promise<GerenciaSPResult> {
+  const session = await auth();
+  const userId = session?.user?.id ? parseInt(session.user.id, 10) : 0;
+
+  if (userId === 0) {
+    return { Resultado: -1, Mensaje: "Error de autenticación: No se pudo obtener el ID del usuario." };
+  }
+
   try {
     const pool = await usegetPool("Default");
     const request = await pool.request();
@@ -74,9 +106,12 @@ export async function createGerencia(data: GerenciaFormData): Promise<GerenciaSP
 
     request.input("p_NombreGerencia", typeParam.NVarChar(100), data.NombreGerencia);
     request.input("p_ClaveGerencia", typeParam.NVarChar(40), data.ClaveGerencia);
-    request.input("p_IdEmpleadoAlta", typeParam.Int, 0); // TODO: Obtener el IdEmpleadoAlta de la sesión
+    request.input("p_IdEmpleadoAlta", typeParam.Int, userId);
 
     const result = await request.execute("PI_Gen_TGerencia");
+
+    revalidatePath("/icalidad/gerencias");
+
     return result.recordset[0] as GerenciaSPResult;
   } catch (error) {
     console.error("Failed to create gerencia:", error);
@@ -86,6 +121,13 @@ export async function createGerencia(data: GerenciaFormData): Promise<GerenciaSP
 
 // Función para actualizar una gerencia existente
 export async function updateGerencia(id: number, data: GerenciaFormData): Promise<GerenciaSPResult> {
+  const session = await auth();
+  const userId = session?.user?.id ? parseInt(session.user.id, 10) : 0;
+
+  if (userId === 0) {
+    return { Resultado: -1, Mensaje: "Error de autenticación: No se pudo obtener el ID del usuario." };
+  }
+
   try {
     const pool = await usegetPool("Default");
     const request = await pool.request();
@@ -95,9 +137,12 @@ export async function updateGerencia(id: number, data: GerenciaFormData): Promis
     request.input("p_NombreGerencia", typeParam.NVarChar(100), data.NombreGerencia);
     request.input("p_ClaveGerencia", typeParam.NVarChar(40), data.ClaveGerencia);
     request.input("p_IdEstatusGerencia", typeParam.Bit, data.IdEstatusGerencia);
-    request.input("p_IdEmpleadoActualiza", typeParam.Int, 0); // TODO: Obtener el IdEmpleadoActualiza de la sesión
+    request.input("p_IdEmpleadoActualiza", typeParam.Int, userId);
 
     const result = await request.execute("PU_Gen_TGerencia");
+
+    revalidatePath("/icalidad/gerencias");
+
     return result.recordset[0] as GerenciaSPResult;
   } catch (error) {
     console.error(`Failed to update gerencia with ID ${id}:`, error);
@@ -113,8 +158,9 @@ export async function deleteGerencia(id: number): Promise<GerenciaSPResult> {
     const typeParam = await typeParameter();
 
     request.input("p_IdGerencia", typeParam.Int, id);
-    // Asumiendo que PD_Gen_TGerencia también devuelve Resultado y Mensaje
     const result = await request.execute("PD_Gen_TGerencia"); 
+    
+    revalidatePath("/icalidad/gerencias");
     return result.recordset[0] as GerenciaSPResult;
   } catch (error) {
     console.error(`Failed to delete gerencia with ID ${id}:`, error);
