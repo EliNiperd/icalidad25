@@ -17,6 +17,7 @@ export interface Empleado {
   IdEstatusEmpleado: boolean;
   Estatus: string;
   Puestos?: PuestoAsignado[]; // NUEVO: Array de puestos
+  Roles?: RolAsignado[]; // NUEVO: Array de roles
 }
 
 // Interface para puestos asignados
@@ -24,6 +25,12 @@ export interface PuestoAsignado {
   IdPuesto: number;
   NombrePuesto: string;
   FechaAsignacion: Date;
+}
+
+// Interfaz para roles asignados a un empleado
+export interface RolAsignado {
+    IdRol: number;
+    NombreRol: string;
 }
 
 // Interface para historial
@@ -61,7 +68,10 @@ export const empleadoSchema = z.object({
   IdPuestos: z
     .array(z.number())
     .min(1, "Debes seleccionar al menos un puesto")
-    .max(10, "No puedes asignar más de 10 puestos"),
+    .max(5, "No puedes asignar más de 5 puestos"),
+  IdRoles: z
+    .array(z.number())
+    .min(1, "Debes seleccionar al menos un rol"),
   IdEstatusEmpleado: z.boolean().default(true),
   IdEmpleado: z.number().optional(),
 });

@@ -2,7 +2,11 @@
 
 import { useForm, useWatch, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { EmpleadoFormData, empleadoSchema } from "@/lib/schemas/empleado";
+import {
+  EmpleadoFormData,
+  empleadoSchema,
+  RolAsignado,
+} from "@/lib/schemas/empleado";
 import { PuestoListItem } from "@/lib/data/puestos";
 import { createEmpleado, updateEmpleado } from "@/lib/data/empleados";
 import { Button } from "@/components/ui/button";
@@ -19,12 +23,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useState, useMemo, useEffect } from "react";
-import { 
-  AlertCircle, 
-  CheckCircle2, 
-  Save, 
-  X, 
-  Plus, 
+import {
+  AlertCircle,
+  CheckCircle2,
+  Save,
+  X,
+  Plus,
   List,
   ChevronDown,
   ChevronUp,
@@ -32,7 +36,7 @@ import {
   Briefcase,
   Search,
   History,
-  UserStar
+  UserStar,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -41,17 +45,21 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 interface CreateEditFormProps {
   empleado?: EmpleadoFormData;
   puestos: PuestoListItem[];
+  roles: RolAsignado[];
 }
 
 export default function CreateEditFormCompleto({
   empleado,
   puestos,
+  roles,
 }: CreateEditFormProps) {
   const router = useRouter();
   const [formError, setFormError] = useState<string | null>(null);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [openPuestos, setOpenPuestos] = useState(false);
   const [searchPuesto, setSearchPuesto] = useState("");
+  const [openRoles, setOpenRoles] = useState(false);
+  const [searchRol, setSearchRol] = useState("");
   const isEditMode = !!empleado;
 
   const {
@@ -70,12 +78,14 @@ export default function CreateEditFormCompleto({
       Password: "",
       Correo: "",
       IdPuestos: [],
+      IdRoles: [],
       IdEstatusEmpleado: true,
     },
   });
 
   const isEstatusChecked = useWatch({ control, name: "IdEstatusEmpleado" });
   const puestosSeleccionados = watch("IdPuestos") || [];
+  const rolesSeleccionados = watch("IdRoles") || [];
 
   // Debug: Verificar que los puestos se carguen en modo edición
   useEffect(() => {
@@ -83,18 +93,26 @@ export default function CreateEditFormCompleto({
       if (empleado.IdPuestos && empleado.IdPuestos.length > 0) {
         setValue("IdPuestos", empleado.IdPuestos);
       }
+      if (empleado.IdRoles && empleado.IdRoles.length > 0) {
+        //console.log("Roles cargados:", empleado.IdRoles);
+        setValue("IdRoles", empleado.IdRoles);
+      }
     }
   }, [isEditMode, empleado, setValue]);
-
 
   // Filtrar puestos según búsqueda
   const puestosFiltrados = useMemo(() => {
     if (!searchPuesto.trim()) return puestos;
     const search = searchPuesto.toLowerCase();
-    return puestos.filter(p => 
-      p.NombrePuesto.toLowerCase().includes(search)
-    );
+    return puestos.filter((p) => p.NombrePuesto.toLowerCase().includes(search));
   }, [puestos, searchPuesto]);
+
+  // Filtrar roles segun busqueda
+  const rolesFiltrados = useMemo(() => {
+    if (!searchRol.trim()) return roles;
+    const search = searchRol.toLowerCase();
+    return roles.filter((p) => p.NombreRol.toLowerCase().includes(search));
+  }, [roles, searchRol]);
 
   const onSubmit = async (data: EmpleadoFormData) => {
     setFormError(null);
@@ -123,9 +141,11 @@ export default function CreateEditFormCompleto({
             Password: "",
             Correo: "",
             IdPuestos: [],
+            IdRoles: [],
             IdEstatusEmpleado: true,
           });
         } else {
+          
           router.push("/icalidad/empleado");
           router.refresh();
         }
@@ -154,21 +174,44 @@ export default function CreateEditFormCompleto({
   const togglePuesto = (idPuesto: number) => {
     const current = puestosSeleccionados;
     const newSelection = current.includes(idPuesto)
-      ? current.filter(id => id !== idPuesto)
+      ? current.filter((id) => id !== idPuesto)
       : [...current, idPuesto];
-    
+
     //console.log("🔄 Toggle puesto:", idPuesto, "Nueva selección:", newSelection);
     setValue("IdPuestos", newSelection, { shouldValidate: true });
   };
 
   const removePuesto = (idPuesto: number) => {
-    const newSelection = puestosSeleccionados.filter(id => id !== idPuesto);
+    const newSelection = puestosSeleccionados.filter((id) => id !== idPuesto);
     //console.log("🗑️ Removiendo puesto:", idPuesto, "Nueva selección:", newSelection);
     setValue("IdPuestos", newSelection, { shouldValidate: true });
   };
 
   const getPuestoNombre = (idPuesto: number) => {
-    return puestos.find(p => p.IdPuesto === idPuesto)?.NombrePuesto || `Puesto #${idPuesto}`;
+    return (
+      puestos.find((p) => p.IdPuesto === idPuesto)?.NombrePuesto ||
+      `Puesto #${idPuesto}`
+    );
+  };
+
+  const toggleRol = (idRol: number) => {
+    const current = rolesSeleccionados;
+    const newSelection = current.includes(idRol)
+      ? current.filter((id) => id !== idRol)
+      : [...current, idRol];
+
+    //console.log("🔄 Toggle puesto:", idRol, "Nueva selección:", newSelection);
+    setValue("IdRoles", newSelection, { shouldValidate: true });
+  };
+
+  const removeRol = (idRol: number) => {
+    const newSelection = rolesSeleccionados.filter((id) => id !== idRol);
+    //console.log("🗑️ Removiendo puesto:", idRol, "Nueva selección:", newSelection);
+    setValue("IdRoles", newSelection, { shouldValidate: true });
+  };
+
+  const getRolNombre = (idRol: number) => {
+    return roles.find((p) => p.IdRol === idRol)?.NombreRol || `Rol #${idRol}`;
   };
 
   return (
@@ -183,7 +226,10 @@ export default function CreateEditFormCompleto({
               size="sm"
               onClick={() => {
                 // Aquí puedes abrir el modal de historial cuando lo implementes
-                console.log("📜 Ver historial del empleado:", empleado.IdEmpleado);
+                console.log(
+                  "📜 Ver historial del empleado:",
+                  empleado.IdEmpleado
+                );
               }}
             >
               <History className="w-4 h-4 mr-2" />
@@ -194,8 +240,8 @@ export default function CreateEditFormCompleto({
         <CardDescription>
           <p className="text-sm text-text-secondary mt-1">
             {isEditMode
-              ? "Actualiza los detalles del empleado y sus puestos asignados."
-              : "Crea un nuevo empleado y asigna sus puestos de trabajo."}
+              ? "Actualiza los detalles del empleado."
+              : "Crea un nuevo empleado."}
           </p>
         </CardDescription>
 
@@ -203,7 +249,9 @@ export default function CreateEditFormCompleto({
         {formError && (
           <div className="flex items-center space-x-2 mt-2 bg-destructive/10 p-3 rounded-lg border border-destructive/30">
             <AlertCircle className="w-4 h-4 text-destructive" />
-            <span className="text-sm text-destructive font-medium">Error: {formError}</span>
+            <span className="text-sm text-destructive font-medium">
+              Error: {formError}
+            </span>
           </div>
         )}
 
@@ -217,7 +265,7 @@ export default function CreateEditFormCompleto({
                   ¡Empleado guardado exitosamente!
                 </span>
                 <p className="text-sm text-success/90 mt-1">
-                  El empleado y sus puestos han sido creados exitosamente.
+                  El empleado y sus detalles se han guardado correctamente.
                 </p>
               </div>
             </div>
@@ -325,197 +373,343 @@ export default function CreateEditFormCompleto({
               </div>
             </div>
           </div>
-            <div >
-                <h3 className="text-lg font-semibold text-text-primary border-b pb-2">
-                Datos Adicionales            
+          <div>
+            <h3 className="text-lg font-semibold text-text-primary border-b pb-2">
+              Datos Adicionales
+            </h3>
+          </div>
+          <Tabs defaultValue="puestos" className="w-full">
+            <TabsList className="bg-light-bg-secondary dark:bg-dark-bg-secondary border border-light-border-default dark:border-dark-border-default">
+              <TabsTrigger
+                value="puestos"
+                className="w-full cursor-pointer data-[state=active]:bg-primary-500 data-[state=active]:text-white hover:bg-light-bg-primary dark:hover:bg-dark-bg-primary transition-colors"
+              >
+                <h3 className="font-semibold text-light-text-primary dark:text-dark-text-primary data-[state=active]:text-white flex items-center gap-2">
+                  <Briefcase className="w-5 h-5" />
+                  Puestos Asignados
+                  {isEditMode && puestosSeleccionados.length > 0 && (
+                    <span className="text-sm font-normal text-light-text-secondary dark:text-dark-text-secondary data-[state=active]:text-white/80">
+                      ({puestosSeleccionados.length} asignado
+                      {puestosSeleccionados.length !== 1 ? "s" : ""})
+                    </span>
+                  )}
                 </h3>
-           </div>
-        <Tabs defaultValue="puestos" className="w-full">
-  <TabsList className="bg-light-bg-secondary dark:bg-dark-bg-secondary border border-light-border-default dark:border-dark-border-default">
-    <TabsTrigger 
-      value="puestos" 
-      className="w-full cursor-pointer data-[state=active]:bg-primary-500 data-[state=active]:text-white hover:bg-light-bg-primary dark:hover:bg-dark-bg-primary transition-colors"
-    >
-      <h3 className="font-semibold text-light-text-primary dark:text-dark-text-primary data-[state=active]:text-white flex items-center gap-2">
-        <Briefcase className="w-5 h-5" />
-        Puestos Asignados
-        {isEditMode && puestosSeleccionados.length > 0 && (
-          <span className="text-sm font-normal text-light-text-secondary dark:text-dark-text-secondary data-[state=active]:text-white/80">
-            ({puestosSeleccionados.length} asignado{puestosSeleccionados.length !== 1 ? 's' : ''})
-          </span>
-        )}
-      </h3>
-    </TabsTrigger>
-    <TabsTrigger 
-      value="roles" 
-      className="w-full cursor-pointer data-[state=active]:bg-primary-500 data-[state=active]:text-white hover:bg-light-bg-primary dark:hover:bg-dark-bg-primary transition-colors"
-    >
-      <h3 className="font-semibold text-light-text-primary dark:text-dark-text-primary data-[state=active]:text-white flex items-center gap-2">
-        <UserStar className="w-5 h-5" />
-        Roles Asignados
-        {isEditMode && puestosSeleccionados.length > 0 && (
-          <span className="text-sm font-normal text-light-text-secondary dark:text-dark-text-secondary data-[state=active]:text-white/80">
-            ({puestosSeleccionados.length} asignado{puestosSeleccionados.length !== 1 ? 's' : ''})
-          </span>
-        )}
-      </h3>
-    </TabsTrigger>
-  </TabsList>
+              </TabsTrigger>
+              <TabsTrigger
+                value="roles"
+                className="w-full cursor-pointer data-[state=active]:bg-primary-500 data-[state=active]:text-white hover:bg-light-bg-primary dark:hover:bg-dark-bg-primary transition-colors"
+              >
+                <h3 className="font-semibold text-light-text-primary dark:text-dark-text-primary data-[state=active]:text-white flex items-center gap-2">
+                  <UserStar className="w-5 h-5" />
+                  Roles Asignados
+                  {isEditMode && rolesSeleccionados.length > 0 && (
+                    <span className="text-sm font-normal text-light-text-secondary dark:text-dark-text-secondary data-[state=active]:text-white/80">
+                      ({rolesSeleccionados.length} asignado
+                      {rolesSeleccionados.length !== 1 ? "s" : ""})
+                    </span>
+                  )}
+                </h3>
+              </TabsTrigger>
+            </TabsList>
 
-  <TabsContent value="puestos" className="mt-6">
-    {/* SECCIÓN: PUESTOS */}
-    <div className="space-y-4">
-      <div className="space-y-3">
-        {/* Botón para abrir/cerrar dropdown */}
-        <div className="relative">
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full justify-between bg-light-bg-primary dark:bg-dark-bg-primary border-light-border-default dark:border-dark-border-default hover:bg-light-bg-secondary dark:hover:bg-dark-bg-secondary text-light-text-primary dark:text-dark-text-primary"
-            onClick={() => setOpenPuestos(!openPuestos)}
-          >
-            <span className="text-light-text-secondary dark:text-dark-text-secondary">
-              {puestosSeleccionados.length > 0
-                ? `${puestosSeleccionados.length} puesto(s) seleccionado(s)`
-                : "Seleccionar puestos..."}
-            </span>
-            {openPuestos ? (
-              <ChevronUp className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-            ) : (
-              <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-            )}
-          </Button>
+            <TabsContent value="puestos" className="mt-6">
+              {/* SECCIÓN: PUESTOS */}
+              <div className="space-y-4">
+                <div className="space-y-3">
+                  {/* Botón para abrir/cerrar dropdown */}
+                  <div className="relative">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full justify-between bg-light-bg-primary dark:bg-dark-bg-primary border-light-border-default dark:border-dark-border-default hover:bg-light-bg-secondary dark:hover:bg-dark-bg-secondary text-light-text-primary dark:text-dark-text-primary"
+                      onClick={() => setOpenPuestos(!openPuestos)}
+                    >
+                      <span className="text-light-text-secondary dark:text-dark-text-secondary">
+                        {puestosSeleccionados.length > 0
+                          ? `${puestosSeleccionados.length} puesto(s) seleccionado(s)`
+                          : "Seleccionar puestos..."}
+                      </span>
+                      {openPuestos ? (
+                        <ChevronUp className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      ) : (
+                        <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      )}
+                    </Button>
 
-          {/* Dropdown personalizado */}
-          {openPuestos && (
-            <div className="absolute z-50 w-full mt-2 bg-light-bg-primary dark:bg-dark-bg-primary border-2 border-light-border-default dark:border-dark-border-default rounded-lg shadow-lg">
-              {/* Barra de búsqueda */}
-              <div className="p-3 border-b border-light-border-default dark:border-dark-border-default">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-light-text-secondary dark:text-dark-text-secondary" />
-                  <Input
-                    type="text"
-                    placeholder="Buscar puesto..."
-                    value={searchPuesto}
-                    onChange={(e) => setSearchPuesto(e.target.value)}
-                    className="pl-9 bg-light-bg-secondary dark:bg-dark-bg-secondary border-light-border-default dark:border-dark-border-default text-light-text-primary dark:text-dark-text-primary placeholder:text-light-text-secondary dark:placeholder:text-dark-text-secondary"
-                    autoFocus
-                  />
-                </div>
-              </div>
+                    {/* Dropdown personalizado */}
+                    {openPuestos && (
+                      <div className="absolute z-50 w-full mt-2 bg-bg-primary dark:bg-dark-bg-primary border-2 border-light-border-default dark:border-dark-border-default rounded-lg shadow-lg">
+                        {/* Barra de búsqueda */}
+                        <div className="p-3 border-b border-light-border-default dark:border-dark-border-default">
+                          <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-light-text-secondary dark:text-dark-text-secondary" />
+                            <Input
+                              type="text"
+                              placeholder="Buscar puesto..."
+                              value={searchPuesto}
+                              onChange={(e) => setSearchPuesto(e.target.value)}
+                              className="pl-9 bg-light-bg-secondary dark:bg-dark-bg-secondary border-light-border-default dark:border-dark-border-default text-light-text-primary dark:text-dark-text-primary placeholder:text-light-text-secondary dark:placeholder:text-dark-text-secondary"
+                              autoFocus
+                            />
+                          </div>
+                        </div>
 
-              {/* Lista de puestos */}
-              <div className="max-h-64 overflow-y-auto p-2">
-                {puestosFiltrados.length === 0 ? (
-                  <div className="p-4 text-center text-light-text-secondary dark:text-dark-text-secondary text-sm">
-                    No se encontraron puestos
-                  </div>
-                ) : (
-                  puestosFiltrados.map((puesto) => {
-                    const isSelected = puestosSeleccionados.includes(puesto.IdPuesto);
-                    return (
-                      <button
-                        key={puesto.IdPuesto}
-                        type="button"
-                        onClick={() => togglePuesto(puesto.IdPuesto)}
-                        className={cn(
-                          "w-full flex items-center gap-2 px-3 py-2 rounded-md text-left text-sm transition-colors",
-                          isSelected
-                            ? "bg-primary-100 text-primary-700 font-medium"
-                            : "hover:bg-light-bg-secondary dark:hover:bg-dark-bg-secondary text-light-text-primary dark:text-dark-text-primary"
-                        )}
-                      >
-                        <div
-                          className={cn(
-                            "flex items-center justify-center w-4 h-4 border-2 rounded transition-colors",
-                            isSelected
-                              ? "bg-primary-600 border-primary-600"
-                              : "border-light-border-default dark:border-dark-border-default"
-                          )}
-                        >
-                          {isSelected && (
-                            <Check className="w-3 h-3 text-white" />
+                        {/* Lista de puestos */}
+                        <div className="max-h-64 overflow-y-auto p-2">
+                          {puestosFiltrados.length === 0 ? (
+                            <div className="p-4 text-center text-light-text-secondary dark:text-dark-text-secondary text-sm">
+                              No se encontraron puestos
+                            </div>
+                          ) : (
+                            puestosFiltrados.map((puesto) => {
+                              const isSelected = puestosSeleccionados.includes(
+                                puesto.IdPuesto
+                              );
+                              return (
+                                <button
+                                  key={puesto.IdPuesto}
+                                  type="button"
+                                  onClick={() => togglePuesto(puesto.IdPuesto)}
+                                  className={cn(
+                                    "w-full flex items-center gap-2 px-3 py-2 rounded-md text-left text-sm transition-colors",
+                                    isSelected
+                                      ? "bg-primary-100 text-primary-700 font-medium"
+                                      : "hover:bg-light-bg-secondary dark:hover:bg-dark-bg-secondary text-light-text-primary dark:text-dark-text-primary"
+                                  )}
+                                >
+                                  <div
+                                    className={cn(
+                                      "flex items-center justify-center w-4 h-4 border-2 rounded transition-colors",
+                                      isSelected
+                                        ? "bg-primary-600 border-primary-600"
+                                        : "border-light-border-default dark:border-dark-border-default"
+                                    )}
+                                  >
+                                    {isSelected && (
+                                      <Check className="w-3 h-3 text-white" />
+                                    )}
+                                  </div>
+                                  <span className="flex-1">
+                                    {puesto.NombrePuesto}
+                                  </span>
+                                </button>
+                              );
+                            })
                           )}
                         </div>
-                        <span className="flex-1">{puesto.NombrePuesto}</span>
-                      </button>
-                    );
-                  })
-                )}
+
+                        {/* Footer con contador y botón cerrar */}
+                        <div className="p-3 border-t border-light-border-default dark:border-dark-border-default flex items-center justify-between gap-2">
+                          <span className="text-xs text-light-text-secondary dark:text-dark-text-secondary">
+                            {puestosSeleccionados.length} de {puestos.length}{" "}
+                            seleccionados
+                          </span>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setOpenPuestos(false);
+                              setSearchPuesto("");
+                            }}
+                            className="bg-light-bg-primary dark:bg-dark-bg-primary border-light-border-default dark:border-dark-border-default text-light-text-primary dark:text-dark-text-primary hover:bg-light-bg-secondary dark:hover:bg-dark-bg-secondary"
+                          >
+                            Cerrar
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Badges de puestos seleccionados */}
+                  {puestosSeleccionados.length > 0 ? (
+                    <div className="flex flex-wrap gap-2 p-4 bg-light-bg-primary dark:bg-dark-bg-primary rounded-lg border border-light-border-default dark:border-dark-border-default">
+                      {puestosSeleccionados.map((idPuesto) => (
+                        <Badge
+                          key={idPuesto}
+                          variant="secondary"
+                          className="px-3 py-1.5 text-sm bg-primary-100 text-primary-700 border border-primary-300 hover:bg-primary-200 transition-colors"
+                        >
+                          {getPuestoNombre(idPuesto)}
+                          <button
+                            type="button"
+                            onClick={() => removePuesto(idPuesto)}
+                            className="ml-2 hover:text-error transition-colors"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </Badge>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-6 bg-light-bg-primary dark:bg-dark-bg-primary rounded-lg border border-dashed border-light-border-default dark:border-dark-border-default text-center">
+                      <Briefcase className="w-8 h-8 mx-auto mb-2 text-light-text-secondary dark:text-dark-text-secondary opacity-50" />
+                      <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">
+                        No hay puestos asignados. Haz clic arriba para
+                        seleccionar.
+                      </p>
+                    </div>
+                  )}
+
+                  {errors.IdPuestos && (
+                    <p className="text-sm text-error flex items-center gap-1">
+                      <AlertCircle className="w-4 h-4" />
+                      {errors.IdPuestos.message}
+                    </p>
+                  )}
+                </div>
               </div>
+            </TabsContent>
 
-              {/* Footer con contador y botón cerrar */}
-              <div className="p-3 border-t border-light-border-default dark:border-dark-border-default flex items-center justify-between gap-2">
-                <span className="text-xs text-light-text-secondary dark:text-dark-text-secondary">
-                  {puestosSeleccionados.length} de {puestos.length} seleccionados
-                </span>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setOpenPuestos(false);
-                    setSearchPuesto("");
-                  }}
-                  className="bg-light-bg-primary dark:bg-dark-bg-primary border-light-border-default dark:border-dark-border-default text-light-text-primary dark:text-dark-text-primary hover:bg-light-bg-secondary dark:hover:bg-dark-bg-secondary"
-                >
-                  Cerrar
-                </Button>
+            <TabsContent value="roles" className="mt-6">
+              {/* SECCIÓN: ROLES */}
+              <div className="space-y-4">
+                <div className="space-y-3">
+                  {/* Botón para abrir/cerrar dropdown */}
+                  <div className="relative">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full justify-between bg-light-bg-primary dark:bg-dark-bg-primary border-light-border-default dark:border-dark-border-default hover:bg-light-bg-secondary dark:hover:bg-dark-bg-secondary text-light-text-primary dark:text-dark-text-primary"
+                      onClick={() => setOpenRoles(!openRoles)}
+                    >
+                      <span className="text-light-text-secondary dark:text-dark-text-secondary">
+                        {rolesSeleccionados.length > 0
+                          ? `${rolesSeleccionados.length} rol(es) seleccionado(s)`
+                          : "Seleccionar roles..."}
+                      </span>
+                      {openRoles ? (
+                        <ChevronUp className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      ) : (
+                        <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      )}
+                    </Button>
+
+                    {/* Dropdown personalizado */}
+                    {openRoles && (
+                      <div className="absolute z-50 w-full mt-2 bg-bg-primary dark:bg-dark-bg-primary border-2 border-light-border-default dark:border-dark-border-default rounded-lg shadow-lg">
+                        {/* Barra de búsqueda */}
+                        <div className="p-3 border-b border-light-border-default dark:border-dark-border-default">
+                          <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-light-text-secondary dark:text-dark-text-secondary" />
+                            <Input
+                              type="text"
+                              placeholder="Buscar rol..."
+                              value={searchRol}
+                              onChange={(e) => setSearchRol(e.target.value)}
+                              className="pl-9 bg-light-bg-secondary dark:bg-dark-bg-secondary border-light-border-default dark:border-dark-border-default text-light-text-primary dark:text-dark-text-primary placeholder:text-light-text-secondary dark:placeholder:text-dark-text-secondary"
+                              autoFocus
+                            />
+                          </div>
+                        </div>
+
+                        {/* Lista de roles */}
+                        <div className="max-h-64 overflow-y-auto p-2">
+                          {rolesFiltrados.length === 0 ? (
+                            <div className="p-4 text-center text-light-text-secondary dark:text-dark-text-secondary text-sm">
+                              No se encontraron roles
+                            </div>
+                          ) : (
+                            rolesFiltrados.map((rol) => {
+                              const isSelected = rolesSeleccionados.includes(
+                                rol.IdRol
+                              );
+                              return (
+                                <button
+                                  key={rol.IdRol}
+                                  type="button"
+                                  onClick={() => toggleRol(rol.IdRol)}
+                                  className={cn(
+                                    "w-full flex items-center gap-2 px-3 py-2 rounded-md text-left text-sm transition-colors",
+                                    isSelected
+                                      ? "bg-primary-100 text-primary-700 font-medium"
+                                      : "hover:bg-light-bg-secondary dark:hover:bg-dark-bg-secondary text-light-text-primary dark:text-dark-text-primary"
+                                  )}
+                                >
+                                  <div
+                                    className={cn(
+                                      "flex items-center justify-center w-4 h-4 border-2 rounded transition-colors",
+                                      isSelected
+                                        ? "bg-primary-600 border-primary-600"
+                                        : "border-light-border-default dark:border-dark-border-default"
+                                    )}
+                                  >
+                                    {isSelected && (
+                                      <Check className="w-3 h-3 text-white" />
+                                    )}
+                                  </div>
+                                  <span className="flex-1">
+                                    {rol.NombreRol}
+                                  </span>
+                                </button>
+                              );
+                            })
+                          )}
+                        </div>
+
+                        {/* Footer con contador y botón cerrar */}
+                        <div className="p-3 border-t border-light-border-default dark:border-dark-border-default flex items-center justify-between gap-2">
+                          <span className="text-xs text-light-text-secondary dark:text-dark-text-secondary">
+                            {rolesSeleccionados.length} de {roles.length}{" "}
+                            seleccionados
+                          </span>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setOpenRoles(false);
+                              setSearchRol("");
+                            }}
+                            className="bg-light-bg-primary dark:bg-dark-bg-primary border-light-border-default dark:border-dark-border-default text-light-text-primary dark:text-dark-text-primary hover:bg-light-bg-secondary dark:hover:bg-dark-bg-secondary"
+                          >
+                            Cerrar
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Badges de roles seleccionados */}
+                  {puestosSeleccionados.length > 0 ? (
+                    <div className="flex flex-wrap gap-2 p-4 bg-light-bg-primary dark:bg-dark-bg-primary rounded-lg border border-light-border-default dark:border-dark-border-default">
+                      {rolesSeleccionados.map((idRol) => (
+                        <Badge
+                          key={idRol}
+                          variant="secondary"
+                          className="px-3 py-1.5 text-sm bg-primary-100 text-primary-700 border border-primary-300 hover:bg-primary-200 transition-colors"
+                        >
+                          {getRolNombre(idRol)}
+                          <button
+                            type="button"
+                            onClick={() => removeRol(idRol)}
+                            className="ml-2 hover:text-error transition-colors"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </Badge>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-6 bg-light-bg-primary dark:bg-dark-bg-primary rounded-lg border border-dashed border-light-border-default dark:border-dark-border-default text-center">
+                      <UserStar className="w-8 h-8 mx-auto mb-2 text-light-text-secondary dark:text-dark-text-secondary opacity-50" />
+                      <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">
+                        No hay roles asignados. Haz clic arriba para
+                        seleccionar.
+                      </p>
+                    </div>
+                  )}
+
+                  {errors.IdRoles && (
+                    <p className="text-sm text-error flex items-center gap-1">
+                      <AlertCircle className="w-4 h-4" />
+                      {errors.IdRoles.message}
+                    </p>
+                  )}
+                </div>
               </div>
-            </div>
-          )}
-        </div>
-
-        {/* Badges de puestos seleccionados */}
-        {puestosSeleccionados.length > 0 ? (
-          <div className="flex flex-wrap gap-2 p-4 bg-light-bg-primary dark:bg-dark-bg-primary rounded-lg border border-light-border-default dark:border-dark-border-default">
-            {puestosSeleccionados.map((idPuesto) => (
-              <Badge
-                key={idPuesto}
-                variant="secondary"
-                className="px-3 py-1.5 text-sm bg-primary-100 text-primary-700 border border-primary-300 hover:bg-primary-200 transition-colors"
-              >
-                {getPuestoNombre(idPuesto)}
-                <button
-                  type="button"
-                  onClick={() => removePuesto(idPuesto)}
-                  className="ml-2 hover:text-error transition-colors"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              </Badge>
-            ))}
-          </div>
-        ) : (
-          <div className="p-6 bg-light-bg-primary dark:bg-dark-bg-primary rounded-lg border border-dashed border-light-border-default dark:border-dark-border-default text-center">
-            <Briefcase className="w-8 h-8 mx-auto mb-2 text-light-text-secondary dark:text-dark-text-secondary opacity-50" />
-            <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">
-              No hay puestos asignados. Haz clic arriba para seleccionar.
-            </p>
-          </div>
-        )}
-
-        {errors.IdPuestos && (
-          <p className="text-sm text-error flex items-center gap-1">
-            <AlertCircle className="w-4 h-4" />
-            {errors.IdPuestos.message}
-          </p>
-        )}
-      </div>
-    </div>
-  </TabsContent>
-
-  <TabsContent value="roles" className="mt-6">
-    <div className="space-y-4">
-      <h3 className="text-lg font-semibold text-light-text-primary dark:text-dark-text-primary border-b border-light-border-default dark:border-dark-border-default pb-2">
-        Roles
-      </h3>
-      {/* Contenido para roles - similar estructura al de puestos */}
-    </div>
-  </TabsContent>
-</Tabs>
-
-          
+            </TabsContent>
+          </Tabs>
 
           {/* SECCIÓN: ESTATUS (solo en edición) */}
           {isEditMode && (

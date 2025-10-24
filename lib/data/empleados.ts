@@ -3,6 +3,8 @@
 import { auth } from "@/auth";
 import { usegetPool, typeParameter } from "@/lib/database/connection";
 import { EmpleadoFormData, EmpleadoSPResult } from "@/lib/schemas/empleado";
+import { RolAsignado } from "@/lib/schemas/empleado";
+import { revalidatePath } from "next/cache";
 
 // Interfaz para la lista de empleados (para dropdowns)
 export interface EmpleadoListItem {
@@ -22,6 +24,8 @@ export interface PuestoAsignado {
     NombrePuesto: string;
     FechaAsignacion: Date;
 }
+
+
 
 export interface HistorialPuesto {
     IdHistorial: number;
@@ -101,6 +105,9 @@ export async function getEmpleadoById(idEmpleado: number): Promise<EmpleadoFormD
 
     // Obtener los puestos asignados
     const puestos = await getPuestosByEmpleado(idEmpleado);
+
+    // Obtener los roles asignados
+    const roles = await getRolesByEmpleado(idEmpleado);
     
     return {
       IdEmpleado: empleado.IdEmpleado,
@@ -109,6 +116,7 @@ export async function getEmpleadoById(idEmpleado: number): Promise<EmpleadoFormD
       Password: empleado.Password,
       Correo: empleado.Correo,
       IdPuestos: puestos.map(p => p.IdPuesto),
+      IdRoles: roles.map(r => r.IdRol),
       IdEstatusEmpleado: empleado.IdEstatusEmpleado,
     };
   } catch (error) {
@@ -149,6 +157,9 @@ export async function createEmpleado(data: EmpleadoFormData): Promise<EmpleadoSP
     
     // 2. Asignar puestos
     await asignarPuestos(idEmpleado, data.IdPuestos, userId);
+
+    // 3. Asignar roles
+    await asignarRoles(idEmpleado, data.IdRoles);
 
     return { 
       ...empleadoResult, 
@@ -196,19 +207,31 @@ export async function updateEmpleado(id: number, data: EmpleadoFormData): Promis
     const idsActuales = puestosActuales.map(p => p.IdPuesto);
     // valores de puestos nuevos, recibidos desde el front
     const idsNuevos = data.IdPuestos;
-
     // Puestos a agregar
     const puestosAgregar = idsNuevos.filter(id => !idsActuales.includes(id));
-    
     // Puestos a remover
     const puestosRemover = idsActuales.filter(id => !idsNuevos.includes(id));
-
     if (puestosAgregar.length > 0) {
       await asignarPuestos(id, puestosAgregar, userId);
     }
-
     if (puestosRemover.length > 0) {
       await removerPuestos(id, puestosRemover, userId);
+    }
+
+    // 3. Actualizar roles (comparar con los actuales)
+    const rolesActuales = await getRolesByEmpleado(id);
+    const idsRolesActuales = rolesActuales.map(r => r.IdRol);
+    // valores de roles nuevos, recibidos desde el front
+    const idsRolesNuevos = data.IdRoles;
+    // Roles a agregar
+    const rolesAgregar = idsRolesNuevos.filter(id => !idsRolesActuales.includes(id));
+    // Roles a remover
+    const rolesRemover = idsRolesActuales.filter(id => !idsRolesNuevos.includes(id));
+    if (rolesAgregar.length > 0) {
+      await asignarRoles(id, rolesAgregar);
+    }
+    if (rolesRemover.length > 0) {
+      await removerRoles(id, rolesRemover);
     }
 
     return { 
@@ -295,13 +318,13 @@ export async function getHistorialPuestos(idEmpleado: number): Promise<Historial
   }
 }
 
-// ========== FUNCIONES AUXILIARES ==========
+// ========== FUNCIONES AUXILIARES para PUESTOS ==========
 
 async function asignarPuestos(idEmpleado: number, idPuestos: number[], userId: number) {
   const pool = await usegetPool("Default");
   
   for (const idPuesto of idPuestos) {
-    console.log(`Asignando puesto ${idPuesto} al empleado ${idEmpleado}`);
+    //console.log(`Asignando puesto ${idPuesto} al empleado ${idEmpleado}`);
     // Insertar en relación
     await pool.request().query(`
       IF NOT EXISTS (SELECT 1 FROM Gen_REmpleadoPuesto WHERE IdEmpleado = ${idEmpleado} AND IdPuesto = ${idPuesto})
@@ -330,5 +353,63 @@ async function removerPuestos(idEmpleado: number, idPuestos: number[], userId: n
       INSERT INTO Gen_TEmpleadoPuestoHistorial (IdEmpleado, IdPuesto, TipoAccion, UsuarioAccion)
       VALUES (${idEmpleado}, ${idPuesto}, 'REMOVIDO', '${userId}')
     `);
+  }
+}
+
+
+// ========== NUEVAS FUNCIONES PARA Roles ==========
+
+// Obtener roles asignados a un empleado
+// Devuelve un array de objetos RolAsignado
+export async function getRolesByEmpleado(idEmpleado: number): Promise<RolAsignado[]> {
+  try {
+    const pool = await usegetPool("Default");
+    const typeParam = await typeParameter();
+
+    // 1. recupera los roles asignados al empleado
+    const request = await pool.request();
+    request.input("p_IdEmpleado", typeParam.Int, idEmpleado);
+
+    const result = await request.execute("PF_Gen_REmpleadoRol");
+    const empleadoResult = result.recordset[0] as EmpleadoSPResult;
+
+    if (!empleadoResult ) {
+      console.error("Failed to fetch roles:");
+      return [];
+    }
+    else {
+      return result.recordset as RolAsignado[];
+    }
+    
+  } catch (error) {
+    console.error("Failed to fetch roles:", error);
+    return [];
+  }
+}
+
+// Funciones Auziliares de roles
+async function asignarRoles(idEmpleado: number, idRoles: number[]) {
+  const pool = await usegetPool("Default");
+  
+  for (const idRol of idRoles) {
+    //console.log(`Asignando rol ${idRol} al empleado ${idEmpleado}`);
+    // Insertar en relación
+    await pool.request().query(`
+      IF NOT EXISTS (SELECT 1 FROM Gen_REmpleadoRol WHERE IdEmpleado = ${idEmpleado} AND IdRol = ${idRol})
+      INSERT INTO Gen_REmpleadoRol (IdEmpleado, IdRol) VALUES (${idEmpleado}, ${idRol})
+    `);
+    
+  }
+}
+
+async function removerRoles(idEmpleado: number, idRoles: number[]) {
+  const pool = await usegetPool("Default");
+  
+  for (const idRol of idRoles) {
+    // Eliminar de relación
+    await pool.request().query(`
+      DELETE FROM Gen_REmpleadoRol WHERE IdEmpleado = ${idEmpleado} AND IdRol = ${idRol}
+    `);
+    
   }
 }
