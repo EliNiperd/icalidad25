@@ -9,7 +9,7 @@ export interface Column<T> {
   key: keyof T | string;
   header: string;
   sortable?: boolean;
-  renderType?: 'estatusGerencia' | 'estatusDepartamento' | 'estatusPuesto' | 'Estatus';
+  renderType?: 'Estatus';
 }
 
 interface DataTableProps<T> {
@@ -23,6 +23,7 @@ interface DataTableProps<T> {
   searchPlaceholder?: string;
   onRowClick?: (row: T) => void;
   renderActions?: (row: T) => React.ReactNode;
+  renderCell?: (row: T, column: Column<T>) => React.ReactNode;
   showRowNumber?: boolean;
 }
 
@@ -37,6 +38,7 @@ export function DataTable<T extends { [key: string]: any }>({
   searchPlaceholder = 'Buscar...',
   onRowClick,
   renderActions,
+  renderCell,
   showRowNumber,
 }: DataTableProps<T>) {
   const router = useRouter();
@@ -81,11 +83,38 @@ export function DataTable<T extends { [key: string]: any }>({
     setCurrentPage(page);
   };
 
-  const renderCell = (row: T, column: Column<T>) => {
-    if (column.renderType === 'estatusGerencia' 
-      || column.renderType === 'estatusPuesto' 
-      || column.renderType === 'estatusDepartamento'
-      || column.renderType === 'Estatus') {
+  // const renderCell = (row: T, column: Column<T>) => {
+  //   if (column.renderType === 'estatusGerencia' 
+  //     || column.renderType === 'estatusPuesto' 
+  //     || column.renderType === 'estatusDepartamento'
+  //     || column.renderType === 'Estatus') {
+  //     const isActivo = Boolean((row as any)[column.key]);
+  //     return (
+  //       <span
+  //         className={`px-3 py-1 inline-flex text-xs font-semibold rounded-full ${
+  //           isActivo
+  //             ? 'bg-success/20 text-success border border-success/30'
+  //             : 'bg-error/20 text-error border border-error/30'
+  //         }`}
+  //       >
+  //         {isActivo ? 'Activo' : 'Inactivo'}
+  //       </span>
+  //     );
+  //   }
+  //   return (row as any)[column.key];
+  // };
+
+   const renderCellContent = (row: T, column: Column<T>) => {
+    // Primero intentar con el renderizado personalizado
+    if (renderCell) {
+      const customRender = renderCell(row, column);
+      if (customRender !== undefined) {
+        return customRender;
+      }
+    }
+
+    // Luego usar los renderTypes predefinidos
+    if (column.renderType === 'Estatus') {
       const isActivo = Boolean((row as any)[column.key]);
       return (
         <span
@@ -99,6 +128,8 @@ export function DataTable<T extends { [key: string]: any }>({
         </span>
       );
     }
+
+    // Por defecto, mostrar el valor directo
     return (row as any)[column.key];
   };
 
@@ -156,6 +187,7 @@ export function DataTable<T extends { [key: string]: any }>({
             </thead>
 
             {/* Cuerpo de la tabla */}
+            {/* Cuerpo de la tabla */}
             <tbody className="divide-y divide-border-default bg-bg-secondary">
               {data.length === 0 ? (
                 <tr>
@@ -190,9 +222,9 @@ export function DataTable<T extends { [key: string]: any }>({
                     {columns.map((column, colIndex) => (
                       <td
                         key={colIndex}
-                        className="px-6 py-3 text-sm text-text-primary whitespace-nowrap"
+                        className="px-6 py-3 text-sm text-text-primary"
                       >
-                        {renderCell(row, column)}
+                        {renderCellContent(row, column)}
                       </td>
                     ))}
                     {renderActions && (

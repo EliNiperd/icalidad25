@@ -30,7 +30,7 @@ export default function DepartamentoTableWrapper({
         { key: 'ClaveDepartamento', header: 'Clave', sortable: true },
         { key: 'NombreDepartamento', header: 'Nombre', sortable: true },
         { key: 'NombreGerencia', header: 'Gerencia', sortable: true },
-        { key: 'IdEstatusDepartamento', header: 'Estatus', sortable: true, renderType: 'estatusGerencia' },
+        { key: 'IdEstatusDepartamento', header: 'Estatus', sortable: true, renderType: 'Estatus' },
     ];
 
     return (

@@ -30,7 +30,7 @@ export default function PuestoTableWrapper({
     { key: 'NombrePuesto', header: 'Nombre', sortable: true },
     { key: 'NombreDepartamento', header: 'Departamento', sortable: true },
     { 
-      key: 'Estatus', 
+      key: 'IdEstatusPuesto', 
       header: 'Estatus', 
       sortable: true,
       renderType: 'Estatus',

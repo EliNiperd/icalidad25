@@ -2,7 +2,7 @@
 
 import { auth } from "@/auth";
 import { usegetPool, typeParameter } from "@/lib/database/connection";
-import { EmpleadoFormData, EmpleadoSPResult } from "@/lib/schemas/empleado";
+import { EmpleadoFormData, EmpleadoSPResult, Empleado } from "@/lib/schemas/empleado";
 import { RolAsignado } from "@/lib/schemas/empleado";
 import { revalidatePath } from "next/cache";
 
@@ -63,7 +63,7 @@ export async function getEmpleados(
   pageSize: number,
   sortBy: string,
   sortOrder: "asc" | "desc"
-): Promise<{ empleados: EmpleadoListItem[]; totalPages: number; totalRecords: number }> {
+): Promise<{ empleados: Empleado[]; totalPages: number; totalRecords: number }> {
   try {
     const pool = await usegetPool("Default");
     const request = await pool.request();
@@ -74,11 +74,17 @@ export async function getEmpleados(
     request.input("p_PageNumber", typeParam.Int, currentPage);
     request.input("p_PageSize", typeParam.Int, pageSize);
     request.input("p_SortBy", typeParam.NVarChar(50), sortBy);
-    //request.input("p_SortOrder", typeParam.NVarChar(4), sortOrder.toUpperCase());
+    request.input("p_SortOrder", typeParam.NVarChar(4), sortOrder.toUpperCase());
 
     const result = await request.execute("PF_Gen_TEmpleado");
+    const empleados = result.recordset as Empleado[];
 
-    const empleados = result.recordset as EmpleadoListItem[];
+    // Obtener puestos para cada empleado
+    for (const empleado of empleados) {
+      empleado.Puestos = await getPuestosByEmpleado(empleado.IdEmpleado);
+    }
+
+    
     const totalRecords = empleados.length > 0 ? (empleados[0] as any).TotalRecords : 0;
     const totalPages = Math.ceil(totalRecords / pageSize);
 

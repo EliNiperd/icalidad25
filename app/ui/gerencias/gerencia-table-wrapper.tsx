@@ -33,7 +33,7 @@ export default function GerenciaTableWrapper({
       key: 'IdEstatusGerencia', 
       header: 'Estatus', 
       sortable: true,
-      renderType: 'estatusGerencia',
+      renderType: 'Estatus',
     },
     
   ];
