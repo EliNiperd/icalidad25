@@ -27,10 +27,9 @@ export default function DepartamentoTableWrapper({
 }: DepartamentoTableWrapperProps) {
     
     const columns: Column<Departamento>[] = [
-        { key: 'IdDepartamento', header: 'ID', sortable: true },
         { key: 'ClaveDepartamento', header: 'Clave', sortable: true },
         { key: 'NombreDepartamento', header: 'Nombre', sortable: true },
-        { key: 'IdGerencia', header: 'Gerencia', sortable: true },
+        { key: 'NombreGerencia', header: 'Gerencia', sortable: true },
         { key: 'IdEstatusDepartamento', header: 'Estatus', sortable: true, renderType: 'estatusGerencia' },
     ];
 

@@ -9,7 +9,7 @@ export interface Column<T> {
   key: keyof T | string;
   header: string;
   sortable?: boolean;
-  renderType?: 'estatusGerencia';
+  renderType?: 'estatusGerencia' | 'estatusDepartamento' | 'estatusPuesto' | 'Estatus';
 }
 
 interface DataTableProps<T> {
@@ -82,7 +82,10 @@ export function DataTable<T extends { [key: string]: any }>({
   };
 
   const renderCell = (row: T, column: Column<T>) => {
-    if (column.renderType === 'estatusGerencia') {
+    if (column.renderType === 'estatusGerencia' 
+      || column.renderType === 'estatusPuesto' 
+      || column.renderType === 'estatusDepartamento'
+      || column.renderType === 'Estatus') {
       const isActivo = Boolean((row as any)[column.key]);
       return (
         <span

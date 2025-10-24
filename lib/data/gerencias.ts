@@ -56,6 +56,8 @@ export async function getGerencias(
     const totalRecords = gerencias.length > 0 ? (gerencias[0] as any).TotalRecords : 0;
     const totalPages = Math.ceil(totalRecords / pageSize);
 
+    //console.log('Gerencias - totalRecords:  ', totalRecords, 'totalPages:  ', totalPages, 'pageSize:  ', pageSize);
+
     return { gerencias, totalPages, totalRecords };
   } catch (error) {
     console.error("Failed to fetch gerencias:", error);

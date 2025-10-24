@@ -55,6 +55,7 @@ export default async function DepartamentoPage({ searchParams }: DepartamentoPag
                 defaultSortBy={sortBy}
                 defaultSortOrder={sortOrder}
                 searchPlaceholder="Buscar departamento..."
+                showRowNumber={true}
                 />
             </div>
           </Suspense>
