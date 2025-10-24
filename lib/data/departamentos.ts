@@ -13,6 +13,7 @@ export interface DepartamentoListItem {
   ClaveDepartamento: string;
   NombreDepartamento: string;
   IdEstatusDepartamento: boolean;
+  IdGerencia: number;
 }
 
 // Función para obtener una lista simple de departamentos activos
@@ -90,7 +91,9 @@ export async function getDepartamentoById(id: number): Promise<DepartamentoListI
         IdDepartamento: depto.IdDepartamento,
         ClaveDepartamento: depto.ClaveDepartamento,
         NombreDepartamento: depto.NombreDepartamento,
-        IdEstatusDepartamento: depto.IdEstatusDepartamento
+        IdEstatusDepartamento: depto.IdEstatusDepartamento,
+        IdGerencia: depto.IdGerencia
+
       };
     }
     
