@@ -15,6 +15,7 @@ export default function LoginPage() {
             <span className="text-white font-bold">Logo oficial</span>
           </div>
         </div>
+        <h2 className="text-3xl font-bold text-primary-600 bg-primary-500 p-3 border-b-2 border-secondary-500">Iniciar Sesión - background</h2>
         
         <LoginForm />
       </div>
