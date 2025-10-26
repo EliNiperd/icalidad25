@@ -25,6 +25,7 @@ interface DataTableProps<T> {
   renderActions?: (row: T) => React.ReactNode;
   renderCell?: (row: T, column: Column<T>) => React.ReactNode;
   showRowNumber?: boolean;
+  colorHeader?: string;
 }
 
 export function DataTable<T extends { [key: string]: any }>({
@@ -40,9 +41,13 @@ export function DataTable<T extends { [key: string]: any }>({
   renderActions,
   renderCell,
   showRowNumber,
+  colorHeader,
 }: DataTableProps<T>) {
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  
+  const headerStyles = colorHeader ? colorHeader : 'bg-secondary-300';
 
   const [searchTerm, setSearchTerm] = useState(searchParams.get('query') || '');
   const [currentPage, setCurrentPage] = useState(
@@ -83,26 +88,6 @@ export function DataTable<T extends { [key: string]: any }>({
     setCurrentPage(page);
   };
 
-  // const renderCell = (row: T, column: Column<T>) => {
-  //   if (column.renderType === 'estatusGerencia' 
-  //     || column.renderType === 'estatusPuesto' 
-  //     || column.renderType === 'estatusDepartamento'
-  //     || column.renderType === 'Estatus') {
-  //     const isActivo = Boolean((row as any)[column.key]);
-  //     return (
-  //       <span
-  //         className={`px-3 py-1 inline-flex text-xs font-semibold rounded-full ${
-  //           isActivo
-  //             ? 'bg-success/20 text-success border border-success/30'
-  //             : 'bg-error/20 text-error border border-error/30'
-  //         }`}
-  //       >
-  //         {isActivo ? 'Activo' : 'Inactivo'}
-  //       </span>
-  //     );
-  //   }
-  //   return (row as any)[column.key];
-  // };
 
    const renderCellContent = (row: T, column: Column<T>) => {
     // Primero intentar con el renderizado personalizado
@@ -151,7 +136,7 @@ export function DataTable<T extends { [key: string]: any }>({
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y-2 divide-border-default">
             {/* Encabezado con fondo distintivo */}
-            <thead className="bg-primary-600">
+            <thead className={headerStyles}>
               <tr>
                 {showRowNumber && (
                   <th className="px-6 py-4 text-left text-sm font-bold text-white">
@@ -164,7 +149,7 @@ export function DataTable<T extends { [key: string]: any }>({
                     onClick={() => column.sortable && handleSort(String(column.key))}
                     className={`px-6 py-4 text-left text-sm font-bold text-white ${
                       column.sortable
-                        ? 'cursor-pointer hover:bg-primary-700 transition-colors select-none'
+                        ? 'cursor-pointer hover:bg-secondary-500 transition-colors select-none'
                         : ''
                     }`}
                   >

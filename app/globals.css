@@ -2,6 +2,7 @@
 
 @theme {
   /* Primary colors */
+  --color-primary: #fafbfc; /* migrar a este estilo desde  --color-bg-primary */
   --color-primary-50: #eef3f5;
   --color-primary-100: #cde0e7;
   --color-primary-200: #a5cbdb;
@@ -15,6 +16,7 @@
   --color-primary-950: #034059;
 
   /* Secondary colors */
+  --color-secondary: #f3f5f7; /* migrar a este estilo desde  --color-bg-secondary */
   --color-secondary-50: #a1c1cc;
   --color-secondary-100: #7cb2c4;
   --color-secondary-200: #53a3be;
@@ -27,8 +29,15 @@
   --color-secondary-900: #013547;
   --color-secondary-950: #002836;
 
+   /* danger colors - light mode */
+    --color-danger-100: #e29d9d;
+    --color-danger-200: #d06262;
+    --color-danger-300: #b13535;
+    
+
   /* Semantic colors */
   --color-success: #059669;
+  
   --color-warning: #f59e0b;
   --color-error: #ef4444;
   --color-info: #2196c5;
@@ -44,16 +53,65 @@
   
   /* Border colors - Light mode (default) */
   --color-border-default: #c8d2dc;
+  --color-default: #c8d2dc; /* Cambia el color por defecto en modo claro - migrar */
 }
 
 @layer base {
+  :root {
+    /* success colors - light mode */
+    --color-success-100: #58dbad;
+    --color-success-200: #28be8a;
+    --color-success-300: #1b7f5c;
+    --color-success: #059669;
+    
+    /* danger colors - light mode */
+    --color-danger-100: #e29d9d;
+    --color-danger-200: #d06262;
+    --color-danger-300: #b13535;
+    
+    --color-destructive: #ef4444;
+  }
   /* Dark mode overrides */
   :root.dark {
+    
     --color-bg-primary: #12161c;
     --color-bg-secondary: #192028;
     --color-text-primary: #f0f2f5;
     --color-text-secondary: #c8cdd2;
     --color-border-default: #3c4855;
+    --color-default: #3c4855; /* Cambia el color por defecto en modo oscuro */
+
+    /* Primary colors - Dark mode */
+    --color-primary-50: #eef3f5;
+    --color-primary-100: #cde0e7;
+    --color-primary-200: #a5cbdb;
+    --color-primary-300: #75b9d5;
+    --color-primary-400: #4bafd7;
+    --color-primary-500: #2da9dc;
+    --color-primary-600: #199ed4;
+    --color-primary-700: #1185b5;
+    --color-primary-800: #0b6b93;
+    --color-primary-900: #065170;
+    --color-primary-950: #034059;
+    --color-primary: #12161c;
+
+    /* Secondary colors - Dark mode */
+    --color-secondary: #192028;
+
+    /* success colors - Dark mode */
+    --color-success-100: #9ae8ce; 
+    --color-success-200: #47d5a6;
+    --color-success-100: #22946e;
+    --color-success: #059669;
+
+    /* danger colors - Dark mode */
+    --color-danger-100: #eb9e9e; 
+    --color-danger-200: #d94a4a;
+    --color-danger-300: #9c2121;
+    
+    
+
+
   }
 
   body {
@@ -74,3 +132,102 @@
   }
  
 }
+
+/* Dark mode overrides */
+/* Base colors */
+/* --clr-dark-a0: #000000;
+--clr-light-a0: #ffffff; */
+
+/** Theme primary colors */
+/* --clr-primary-a0: #2da9dc;
+--clr-primary-a10: #54b2e0;
+--clr-primary-a20: #6fbce4;
+--clr-primary-a30: #87c5e8;
+--clr-primary-a40: #9dcfec;
+--clr-primary-a50: #b1d8f0; */
+
+/** Theme surface colors */
+/* --clr-surface-a0: #12161c;
+--clr-surface-a10: #282b31;
+--clr-surface-a20: #3f4247;
+--clr-surface-a30: #575a5f;
+--clr-surface-a40: #717377;
+--clr-surface-a50: #8b8d91; */
+
+/** Theme tonal surface colors */
+/* --clr-surface-tonal-a0: #18232c;
+--clr-surface-tonal-a10: #2e3840;
+--clr-surface-tonal-a20: #454d55;
+--clr-surface-tonal-a30: #5d646b;
+--clr-surface-tonal-a40: #767c82;
+--clr-surface-tonal-a50: #90959a; */
+
+/** Success colors */
+/* --clr-success-a0: #22946e;
+--clr-success-a10: #47d5a6;
+--clr-success-a20: #9ae8ce; */
+
+/** Warning colors */
+/* --clr-warning-a0: #a87a2a;
+--clr-warning-a10: #d7ac61;
+--clr-warning-a20: #ecd7b2; */
+
+/** Danger colors */
+/* --clr-danger-a0: #9c2121;
+--clr-danger-a10: #d94a4a;
+--clr-danger-a20: #eb9e9e; */
+
+/** Info colors */
+/* --clr-info-a0: #21498a;
+--clr-info-a10: #4077d1;
+--clr-info-a20: #92b2e5; */
+
+/* Ligth mode overrides *"
+/** Base colors */
+/* --clr-dark-a0: #000000;
+--clr-light-a0: #ffffff; */
+
+/** Theme primary colors */
+/* --clr-primary-a0: #2da9dc;
+--clr-primary-a10: #2d95c1;
+--clr-primary-a20: #2b81a6;
+--clr-primary-a30: #296d8d;
+--clr-primary-a40: #255b74;
+--clr-primary-a50: #21485c; */
+
+/** Theme surface colors */
+/* --clr-surface-a0: #fafbfc;
+--clr-surface-a10: #eceded;
+--clr-surface-a20: #dededf;
+--clr-surface-a30: #d0d0d1;
+--clr-surface-a40: #c2c2c3;
+--clr-surface-a50: #b4b5b5; */
+
+/** Theme tonal surface colors */
+/* --clr-surface-tonal-a0: #e9f3f9;
+--clr-surface-tonal-a10: #dde6eb;
+--clr-surface-tonal-a20: #d1d8dd;
+--clr-surface-tonal-a30: #c5cbcf;
+--clr-surface-tonal-a40: #b9bec1;
+--clr-surface-tonal-a50: #adb1b4; */
+
+/** Success colors */
+/* --clr-success-a0: #1b7f5c;
+--clr-success-a10: #28be8a;
+--clr-success-a20: #58dbad; */
+
+/** Warning colors */
+/* --clr-warning-a0: #b8871f;
+--clr-warning-a10: #dfae44;
+--clr-warning-a20: #ebca85; */
+
+/** Danger colors */
+/* --clr-danger-a0: #b13535;
+--clr-danger-a10: #d06262;
+--clr-danger-a20: #e29d9d; */
+
+/** Info colors */
+/* --clr-info-a0: #1e56a3;
+--clr-info-a10: #347ada;
+--clr-info-a20: #74a4e6; */
+
