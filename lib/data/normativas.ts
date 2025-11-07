@@ -7,7 +7,9 @@ import { NormativaFormData } from "@/lib/schemas/normativa";
 // Interfaz para la lista de normativas (para dropdowns)
 export interface NormativaListItem {
   IdNormativa: number;
+  ClaveNormativa: string;
   NombreNormativa: string;
+  IdEstatusNormativa: boolean;
 }
 
 
