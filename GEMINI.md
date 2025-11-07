@@ -54,6 +54,8 @@ Se implementó una solución moderna aprovechando las características de React 
 ### Resultado
 La experiencia de usuario en la carga de datos ha mejorado significativamente. La carga inicial ahora puede mostrar un esqueleto (o `fallback`), y las interacciones subsecuentes en la tabla (paginar, buscar) proveen retroalimentación visual instantánea, resultando en una interfaz más fluida y moderna.
 
+-   **Aplicación Generalizada:** El patrón de carga con `Suspense` y `TableSkeleton` se aplicó exitosamente a todos los catálogos existentes (Gerencias, Departamentos, Puestos, Empleados, Requisitos), unificando la experiencia de usuario en toda la aplicación.
+
 ## Próximos Pasos (Según Solicitud del Usuario)
 
 1.  **Crear CRUD de Requisitos:** Implementar el catálogo de Requisitos, donde un Requisito depende de una Normativa.

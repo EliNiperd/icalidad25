@@ -1,9 +1,9 @@
 import { Suspense } from "react";
-import { getNormativas } from "@/lib/data/normativas";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import NormativaTableWrapper from "@/app/ui/normativas/normativa-table-wrapper";
 import { Plus } from "lucide-react";
+import { TableSkeleton } from "@/app/ui/shared/skeletons";
+import NormativasTable from "@/app/ui/normativas/normativas-table";
 
 interface NormativaPageProps {
     searchParams?: { 
@@ -22,14 +22,6 @@ export default async function NormativaPage({ searchParams }: NormativaPageProps
     const sortOrder = searchParams?.sortOrder || 'asc'; // Orden por defecto
     const pageSize = 10; // Tamaño de página por defecto
 
-    const { normativas, totalPages, totalRecords } = await getNormativas(
-        query,
-        currentPage,
-        pageSize,
-        sortBy,
-        sortOrder
-    );
-
     return (
         <>
         <div className="flex justify-between items-center mx-auto py-2">
@@ -44,17 +36,14 @@ export default async function NormativaPage({ searchParams }: NormativaPageProps
           </div>
           </div>
           
-          <Suspense fallback={<div>Cargando normativas...</div>}>
-            <NormativaTableWrapper 
-                normativas={normativas} 
-                totalPages={totalPages} 
-                totalRecords={totalRecords}
+          <Suspense fallback={<TableSkeleton cols={5} rows={pageSize} />}>
+            <NormativasTable 
+                query={query}
+                currentPage={currentPage}
                 pageSize={pageSize}
-                defaultSortBy={sortBy}
-                defaultSortOrder={sortOrder}
-                searchPlaceholder="Buscar normativa..."
-                showRowNumber={true}
-                 />
+                sortBy={sortBy}
+                sortOrder={sortOrder}
+            />
           </Suspense>
         </>
     );
