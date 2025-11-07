@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import React, { useTransition } from 'react';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { PaginationControls } from './pagination';
 
@@ -44,48 +44,45 @@ export function DataTable<T extends { [key: string]: any }>({
   colorHeader,
 }: DataTableProps<T>) {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
+  const [isPending, startTransition] = useTransition();
 
   
   const headerStyles = colorHeader ? colorHeader : 'bg-secondary-300';
 
-  const [searchTerm, setSearchTerm] = useState(searchParams.get('query') || '');
-  const [currentPage, setCurrentPage] = useState(
-    Number(searchParams.get('page')) || 1
-  );
-  const [sortBy, setSortBy] = useState(
-    (searchParams.get('sortBy') as string) || defaultSortBy
-  );
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>(
-    ((searchParams.get('sortOrder') as 'asc' | 'desc') || defaultSortOrder)  
-  );
+  // Get current values from URL search params
+  const currentPage = Number(searchParams.get('page')) || 1;
+  const searchTerm = searchParams.get('query') || '';
+  const sortBy = searchParams.get('sortBy') || defaultSortBy;
+  const sortOrder = (searchParams.get('sortOrder') as 'asc' | 'desc') || defaultSortOrder;
 
-  useEffect(() => {
+  const handleUrlChange = (newParams: Partial<{ query: string; page: number; sortBy: string; sortOrder: 'asc' | 'desc' }>) => {
     const params = new URLSearchParams(searchParams.toString());
-    params.set('page', currentPage.toString());
-    params.set('query', searchTerm);
-    params.set('sortBy', sortBy);
-    params.set('sortOrder', sortOrder);
-    router.push(`?${params.toString()}`);
-  }, [searchTerm, currentPage, sortBy, sortOrder, router, searchParams]);
+    Object.entries(newParams).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        params.set(key, String(value));
+      } else {
+        params.delete(key);
+      }
+    });
+
+    startTransition(() => {
+      router.push(`${pathname}?${params.toString()}`);
+    });
+  };
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-    setCurrentPage(1);
+    handleUrlChange({ query: e.target.value, page: 1 });
   };
 
   const handleSort = (columnKey: string) => {
-    if (sortBy === columnKey) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortBy(columnKey);
-      setSortOrder('asc');
-    }
-    setCurrentPage(1);
+    const newSortOrder = sortBy === columnKey && sortOrder === 'asc' ? 'desc' : 'asc';
+    handleUrlChange({ sortBy: columnKey, sortOrder: newSortOrder, page: 1 });
   };
 
   const handlePageChange = (page: number) => {
-    setCurrentPage(page);
+    handleUrlChange({ page });
   };
 
 
@@ -125,7 +122,7 @@ export function DataTable<T extends { [key: string]: any }>({
         <Input
           type="text"
           placeholder={searchPlaceholder}
-          value={searchTerm}
+          defaultValue={searchTerm}
           onChange={handleSearch}
           className="max-w-sm bg-bg-primary border-border-default"
         />
@@ -172,8 +169,11 @@ export function DataTable<T extends { [key: string]: any }>({
             </thead>
 
             {/* Cuerpo de la tabla */}
-            {/* Cuerpo de la tabla */}
-            <tbody className="divide-y divide-border-default bg-bg-secondary">
+            <tbody 
+              className={`divide-y divide-border-default bg-bg-secondary transition-opacity ${
+                isPending ? 'opacity-50 pointer-events-none' : 'opacity-100'
+              }`}>
+
               {data.length === 0 ? (
                 <tr>
                   <td

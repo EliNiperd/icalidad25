@@ -26,6 +26,34 @@ Se ha implementado la estructura completa para los CRUD de Departamentos, Puesto
 
 ---
 
+## 6. Optimización de Carga de Datos con `Suspense` y `useTransition`
+
+### Problema Original
+La carga de datos en las tablas de catálogos (ej. Procesos) no mostraba un estado de carga intermedio (`fallback` de `Suspense` o esqueleto). En la navegación inicial, la obtención de datos era tan rápida que el `fallback` no era perceptible. En navegaciones del lado del cliente (paginación, búsqueda, ordenamiento), la UI antigua permanecía visible hasta que los nuevos datos estaban listos, sin dar retroalimentación al usuario de que una carga estaba en progreso.
+
+### Acciones Realizadas
+Se implementó una solución moderna aprovechando las características de React 18 y Next.js para el streaming de UI y las transiciones.
+
+1.  **Streaming con `Suspense` para Carga Inicial:**
+    *   Se refactorizó el componente de la página principal (ej. `app/icalidad/proceso/page.tsx`) para que no realizara el `await` de los datos directamente.
+    *   Se creó un nuevo Componente de Servidor (`async`) intermedio (ej. `app/ui/procesos/procesos-table.tsx`) que se encarga de hacer el `await` de los datos.
+    *   La página principal ahora renderiza este nuevo componente dentro de una barrera `<Suspense>`, permitiendo que la página se muestre instantáneamente con un `fallback` mientras los datos se cargan en segundo plano.
+
+2.  **Transiciones con `useTransition` para Navegación del Cliente:**
+    *   Se refactorizó el componente genérico `app/ui/shared/data-table.tsx` para modernizar su manejo de estado.
+    *   Se eliminó la lógica tradicional basada en `useState` y `useEffect` para manejar la paginación, búsqueda y ordenamiento.
+    *   Se implementó el hook `useTransition`. Ahora, cualquier cambio en la URL (al paginar, buscar, etc.) se envuelve en una `startTransition`.
+    *   El estado `isPending` de la transición se utiliza para aplicar un estilo de "cargando" (opacidad reducida) directamente sobre la tabla, dando al usuario retroalimentación visual inmediata durante las navegaciones del lado del cliente.
+
+3.  **Creación de Esqueleto de Carga Reutilizable:**
+    *   Se desarrolló un componente `TableSkeleton` en `app/ui/shared/skeletons.tsx`.
+    *   Este componente imita la estructura de la `DataTable` (búsqueda, tabla, paginación) con una animación de pulso para una carga visualmente coherente.
+    *   Es configurable mediante `props` (ej. `rows`, `cols`), lo que permite adaptarlo fácilmente a las distintas tablas de los catálogos.
+    *   Se integró en el `fallback` de `Suspense` de la página de Procesos, reemplazando el simple texto de "Cargando...".
+
+### Resultado
+La experiencia de usuario en la carga de datos ha mejorado significativamente. La carga inicial ahora puede mostrar un esqueleto (o `fallback`), y las interacciones subsecuentes en la tabla (paginar, buscar) proveen retroalimentación visual instantánea, resultando en una interfaz más fluida y moderna.
+
 ## Próximos Pasos (Según Solicitud del Usuario)
 
 1.  **Crear CRUD de Requisitos:** Implementar el catálogo de Requisitos, donde un Requisito depende de una Normativa.
