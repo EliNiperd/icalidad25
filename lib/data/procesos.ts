@@ -5,7 +5,7 @@ import { usegetPool, typeParameter } from "@/lib/database/connection";
 import { ProcesoFormData } from "@/lib/schemas/proceso";
 
 interface ProcesosListItem {
-    IdProceso?: number;
+    IdProceso: number;
     ClaveProceso: string;
     NombreProceso: string;
     IdEstatusProceso: boolean;
