@@ -1,14 +1,11 @@
 "use client";
 
-import { useForm, useWatch, type Resolver } from "react-hook-form";
+import { useForm, FormProvider, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ProcesoFormData, procesoSchema } from "@/lib/schemas/proceso";
 import { EmpleadoListItem } from "@/lib/data/empleados";
 import { createProceso, updateProceso } from "@/lib/data/procesos";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import { useRouter } from "next/navigation";
 import {
   Card,
@@ -19,8 +16,9 @@ import {
 } from "@/components/ui/card";
 import { useState } from "react";
 import { AlertCircle, CheckCircle2, List, Plus, Save, X } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Select } from "@radix-ui/react-select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import DatosGeneralesForm from "./datos-generales-form";
+import SubProcesosForm from "./sub-procesos-form";
 
 interface CreateEditFormProps {
   proceso?: ProcesoFormData;
@@ -36,50 +34,40 @@ export default function CreateEditForm({
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const isEditMode = !!proceso?.IdProceso;
 
-  const {
-    register,
-    handleSubmit,
-    reset,
-    setValue,
-    control,
-    formState: { errors, isSubmitting },
-  } = useForm<ProcesoFormData>({
+  const methods = useForm<ProcesoFormData>({
     resolver: zodResolver(procesoSchema) as Resolver<ProcesoFormData>,
     defaultValues: proceso || {
       ClaveProceso: "",
       NombreProceso: "",
-      IdProceso: undefined,
+      IdEmpleadoResponsable: undefined,
       IdEstatusProceso: true,
     },
   });
 
-  // Observar el valor del checkbox para la UI
-  const isEstatusChecked = useWatch({ control, name: "IdEstatusProceso" });
+  const {
+    handleSubmit,
+    reset,
+    formState: { isSubmitting },
+  } = methods;
 
   const onSubmit = async (data: ProcesoFormData) => {
     setFormError(null);
     setShowSuccessMessage(false);
+    
     try {
-      let result;
-      if (proceso?.IdProceso) {
-        result = await updateProceso(proceso.IdProceso, data);
-      } else {
-        result = await createProceso(data);
-      }
+      const result = isEditMode
+        ? await updateProceso(proceso.IdProceso!, data)
+        : await createProceso(data);
+
       if (result.Resultado !== 200 && result.Resultado !== 201) {
         setFormError(result.Mensaje);
-        return;
       } else {
-        if (!proceso?.IdProceso) {
-          setShowSuccessMessage(true);
-          reset({
-            ClaveProceso: "",
-            NombreProceso: "",
-            IdEstatusProceso: true,
-          });
-        } else {
+        if (isEditMode) {
           router.push("/icalidad/proceso");
           router.refresh();
+        } else {
+          setShowSuccessMessage(true);
+          reset();
         }
       }
     } catch (error) {
@@ -88,30 +76,18 @@ export default function CreateEditForm({
     }
   };
 
-  const handleCancel = () => {
-    router.back();
-  };
-
-  const handleCreateAnother = () => {
-    setShowSuccessMessage(false);
-  };
-
+  const handleCancel = () => router.back();
+  const handleCreateAnother = () => setShowSuccessMessage(false);
   const handleGoToList = () => {
     router.push("/icalidad/proceso");
     router.refresh();
   };
 
-  const selectStyle = `w-full p-2 border rounded-md bg-primary border-default 
-    text-text-primary placeholder:text-text-secondary focus:outline-none 
-    focus:border-primary-600 focus:ring-1 focus:ring-primary-600`;
-  const inputStyle = `w-full p-2 border rounded-md bg-primary border-border-default 
-    text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-primary-600 
-    focus:ring-1 focus:ring-primary-600 `;
-  const errorInputStyle =
-    "border-danger-300 focus:ring-danger-500 dark:border-danger-600 placeholder:text-danger-200 ";
-  const errorTextStyle = `text-danger-200 text-sm flex items-center gap-1`;
-  const errorIconStyle = "h-4 w-4 text-danger-200 flex-shrink-0";
-  const formStyle = `bg-secondary border-2 border-border-default rounded-lg shadow-lg p-6 space-y-6 `;
+  const formStyle = `bg-secondary border-2 border-border-default rounded-lg shadow-lg p-6`;
+  const tabsTriggerStyle = `px-4 py-2 -mb-[2px] cursor-pointer border-t-2 border-l-2 border-r-2 border-transparent rounded-t-md rounded-b-none
+    data-[state=active]:bg-primary-400 data-[state=active]:text-white 
+    data-[state=active]:border-border-default data-[state=active]:border-b-primary-400
+    hover:bg-muted/50 transition-colors`;
 
   return (
     <Card className="max-w-2xl mx-auto border-none">
@@ -125,7 +101,6 @@ export default function CreateEditForm({
               ? "Modifica los detalles del proceso."
               : "Crea un nuevo proceso."}
           </p>
-          {/* Mensaje de error*/}
           {formError && (
             <div className="mb-6 bg-error/10 border-2 border-error rounded-lg p-4 flex items-start gap-3">
               <AlertCircle className="h-6 w-6 text-error flex-shrink-0 mt-0.5 " />
@@ -135,7 +110,6 @@ export default function CreateEditForm({
               </div>
             </div>
           )}
-          {/* Mensaje de éxito */}
           {showSuccessMessage && (
             <div className="mb-6 bg-success/10 border-2 border-success rounded-lg p-4">
               <div className="flex items-start gap-3 mb-4">
@@ -143,9 +117,6 @@ export default function CreateEditForm({
                 <div>
                   <p className="font-semibold text-success">
                     ¡Proceso guardado exitosamente!
-                  </p>
-                  <p className="text-sm text-success/90 mt-1">
-                    El proceso se ha guardado correctamente.
                   </p>
                 </div>
               </div>
@@ -155,16 +126,14 @@ export default function CreateEditForm({
                   variant="primary"
                   onClick={handleCreateAnother}
                 >
-                  <Plus className="w-4 h-4" />
-                  Crear otro
+                  <Plus className="w-4 h-4" /> Crear otro
                 </Button>
                 <Button
                   type="button"
                   variant="outline"
                   onClick={handleGoToList}
                 >
-                  <List className="w-4 h-4" />
-                  Ir al Listado
+                  <List className="w-4 h-4" /> Ir al Listado
                 </Button>
               </div>
             </div>
@@ -172,132 +141,92 @@ export default function CreateEditForm({
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form 
-            onSubmit={handleSubmit(onSubmit)}
-            className={formStyle}
-        >
-            
-              <div>
-                <Label htmlFor="ClaveProceso">Clave Proceso</Label>
-                <Input
-                  id="ClaveProceso"
-                  {...register("ClaveProceso")}
-                  placeholder="Eje. PR-01"
-                  className={cn(
-                    inputStyle,
-                    errors.ClaveProceso && errorInputStyle
-                  )}
-                />
-                {errors.ClaveProceso && (
-                  <p className={errorTextStyle}>
-                    <AlertCircle className={errorIconStyle} />
-                    {errors.ClaveProceso.message}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <Label htmlFor="NombreProceso">Nombre Proceso</Label>
-                <Input
-                  id="NombreProceso"
-                  {...register("NombreProceso")}
-                  placeholder="Eje. Planificación"
-                  className={cn(
-                    inputStyle,
-                    errors.NombreProceso && errorInputStyle
-                  )}
-                />
-                {errors.NombreProceso && (
-                  <p className={errorTextStyle}>
-                    <AlertCircle className={errorIconStyle} />
-                    {errors.NombreProceso.message}
-                  </p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="IdEmpleadoResponsable">
-                  Empleado Responsable *
-                </Label>
-                <select
-                  id="IdEmpleadoResponsable"
-                  {...register("IdEmpleadoResponsable")}
-                  className={selectStyle}
-                  defaultValue={proceso?.IdEmpleadoResponsable}
-                >
-                  <option value="">Selecciona un empleado responsable</option>
-                  {empleados.map((empleado) => (
-                    <option
-                      key={empleado.IdEmpleado}
-                      value={empleado.IdEmpleado}
+        <FormProvider {...methods}>
+          <form onSubmit={handleSubmit(onSubmit)} className={formStyle}>
+            <Tabs defaultValue="general" className="w-full gap-4">
+              <TabsList className="bg-background justify-start rounded-none p-0 border-b-2 border-border-default">
+                <TabsTrigger value="general" className={tabsTriggerStyle}>
+                  General
+                </TabsTrigger>
+                {isEditMode && (
+                  <>
+                    <TabsTrigger
+                      value="subprocesos"
+                      className={tabsTriggerStyle}
                     >
-                      {empleado.NombreEmpleado}
-                    </option>
-                  ))}
-                </select>
-                {errors.IdEmpleadoResponsable && (
-                  <p className={errorTextStyle}>
-                    <AlertCircle className={errorIconStyle} />
-                    {errors.IdEmpleadoResponsable.message}
-                  </p>
+                      Sub-procesos
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="requisitos"
+                      className={tabsTriggerStyle}
+                    >
+                      Requisitos
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="departamentos"
+                      className={tabsTriggerStyle}
+                    >
+                      Departamentos
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="colaboradores"
+                      className={tabsTriggerStyle}
+                    >
+                      Colaboradores
+                    </TabsTrigger>
+                  </>
                 )}
-              </div>
+              </TabsList>
 
-              {isEditMode && (
-                <div className="flex items-center space-x-2 pt-2">
-                  <Checkbox
-                    id="IdEstatusProceso"
-                    {...register("IdEstatusProceso")}
-                    defaultChecked={isEstatusChecked}
-                    onCheckedChange={(checked) => {
-                      setValue("IdEstatusProceso", Boolean(checked));
-                    }}
-                  />
-                  <Label htmlFor="IdEstatusProceso">Activo</Label>
-                  <p className="text-xs text-text-secondary mt-0.5">
-                    {isEstatusChecked
-                      ? "El proceso está activo y puede ser utilizado."
-                      : "El proceso está inactivo y no puede ser utilizado."}
-                  </p>
-                  <span
-                    className={`px-3 py-1 text-xs font-medium rounded-full ${
-                      isEstatusChecked
-                        ? "bg-success-100 text-success-700"
-                        : "bg-error-100 text-error-700"
-                    }`}
+              <TabsContent value="general">
+                <DatosGeneralesForm
+                  empleados={empleados}
+                  isEditMode={isEditMode}
+                />
+                <div className="flex justify-end gap-3 pt-4 mt-6 border-t border-border-default">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="border-border-default hover:bg-bg-primary "
+                    onClick={handleCancel}
+                    disabled={isSubmitting}
                   >
-                    {isEstatusChecked ? "Activo" : "Inactivo"}
-                  </span>
+                    <X className="h-4 w-4" /> Cancelar
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={isSubmitting}
+                    variant="primary"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />{" "}
+                        Guardando...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="h-4 w-4" />{" "}
+                        {isEditMode ? "Actualizar" : "Crear"}
+                      </>
+                    )}
+                  </Button>
                 </div>
-              )}
-
-              {/* Botones de acción */}
-              <div className="flex justify-end gap-3 pt-4 border-t border-border-default">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleCancel}
-                  className="border-border-default hover:bg-bg-primary "
-                  disabled={isSubmitting}
-                >
-                  <X className="h-4 w-4" />
-                  Cancelar
-                </Button>
-                <Button type="submit" disabled={isSubmitting} variant="primary">
-                  {isSubmitting ? (
-                    <>
-                      <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Guardando...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="h-4 w-4" />
-                      {proceso?.IdProceso ? "Actualizar" : "Crear"}
-                    </>
-                  )}
-                </Button>
-              </div>
-        </form>
+              </TabsContent>
+              <TabsContent value="subprocesos">
+                <SubProcesosForm IdProceso={proceso?.IdProceso ? proceso.IdProceso : 0} />
+              </TabsContent>
+              <TabsContent value="requisitos">
+                <div>Requisitos (contenido pendiente)</div>
+              </TabsContent>
+              <TabsContent value="departamentos">
+                <div>Departamentos (contenido pendiente)</div>
+              </TabsContent>
+              <TabsContent value="colaboradores">
+                <div>Colaboradores (contenido pendiente)</div>
+              </TabsContent>
+            </Tabs>
+          </form>
+        </FormProvider>
       </CardContent>
     </Card>
   );

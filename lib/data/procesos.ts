@@ -5,7 +5,7 @@ import { usegetPool, typeParameter } from "@/lib/database/connection";
 import { ProcesoFormData } from "@/lib/schemas/proceso";
 
 interface ProcesosListItem {
-    IdProceso: number;
+    IdProceso?: number;
     ClaveProceso: string;
     NombreProceso: string;
     IdEstatusProceso: boolean;
@@ -144,3 +144,21 @@ export async function getProcesoById(id: number): Promise<ProcesosListItem | nul
       };
     }
   } 
+
+// ========== Funciones para SubProcesos ==========
+
+// Función para obtener los subprocesos de un proceso
+export async function getSubProcesos(IdProceso: number): Promise<ProcesosListItem[]> {
+    try {
+      const pool = await usegetPool("Default");
+      const request = await pool.request();
+      const typeParam = await typeParameter();
+  
+      request.input("p_IdProceso", typeParam.Int, IdProceso);
+      const result = await request.execute("PF_Gen_TSubProceso");
+      return result.recordset as ProcesosListItem[];
+    } catch (error) {
+      console.error(`Error al obtener los subprocesos para el proceso con ID ${IdProceso}:`, error);
+      return [];
+    }
+  }

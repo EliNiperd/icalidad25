@@ -63,7 +63,7 @@ export default function ProcesoActions({ idProceso }: { idProceso: number }) {
           </Button>
         </Link>
         <Button
-          variant="danger"
+          variant="destructive"
           size="sm"
           onClick={confirmDelete}
           disabled={isDeleting}
