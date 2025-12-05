@@ -9,6 +9,7 @@ interface RequisitosListItem {
   ClaveRequisito: string;
   NombreRequisito: string;
   IdNormativa: number;
+  NombreNormativa?: string;
   IdEstatusRequisito: boolean;
   TextoRequisito: string;
 }

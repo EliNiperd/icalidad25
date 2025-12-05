@@ -19,6 +19,10 @@ import { AlertCircle, CheckCircle2, List, Plus, Save, X } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DatosGeneralesForm from "./datos-generales-form";
 import SubProcesosForm from "./sub-procesos-form";
+import ProcesoRequisitoForm from "./requisitos-form";
+
+import ProcesoDepartamentoForm from "./departamentos-form";
+import ProcesoColaboradorForm from "./colaboradores-form";
 
 interface CreateEditFormProps {
   proceso?: ProcesoFormData;
@@ -44,7 +48,7 @@ export default function CreateEditForm({
     },
   });
 
-  const {
+  const { 
     handleSubmit,
     reset,
     formState: { isSubmitting },
@@ -61,11 +65,13 @@ export default function CreateEditForm({
 
       if (result.Resultado !== 200 && result.Resultado !== 201) {
         setFormError(result.Mensaje);
-      } else {
+      }
+      else {
         if (isEditMode) {
           router.push("/icalidad/proceso");
           router.refresh();
-        } else {
+        }
+        else {
           setShowSuccessMessage(true);
           reset();
         }
@@ -88,63 +94,62 @@ export default function CreateEditForm({
     data-[state=active]:bg-primary-400 data-[state=active]:text-white 
     data-[state=active]:border-border-default data-[state=active]:border-b-primary-400
     hover:bg-muted/50 transition-colors`;
+  const tabsListStyle = `bg-background justify-start rounded-none p-0 border-b-2 border-border-default`;
 
   return (
-    <Card className="max-w-2xl mx-auto border-none">
+    <Card className="max-w-4xl mx-auto border-none">
       <CardHeader>
         <CardTitle className="text-2xl font-bold text-primary-600">
           {isEditMode ? "Editar Proceso" : "Crear Proceso"}
         </CardTitle>
-        <CardDescription>
-          <p className="text-primary-600">
-            {isEditMode
-              ? "Modifica los detalles del proceso."
-              : "Crea un nuevo proceso."}
-          </p>
-          {formError && (
-            <div className="mb-6 bg-error/10 border-2 border-error rounded-lg p-4 flex items-start gap-3">
-              <AlertCircle className="h-6 w-6 text-error flex-shrink-0 mt-0.5 " />
-              <div>
-                <p className="font-semibold text-error">Error al guardar</p>
-                <p className="text-sm text-error/90 mt-1">{formError}</p>
-              </div>
-            </div>
-          )}
-          {showSuccessMessage && (
-            <div className="mb-6 bg-success/10 border-2 border-success rounded-lg p-4">
-              <div className="flex items-start gap-3 mb-4">
-                <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-semibold text-success">
-                    ¡Proceso guardado exitosamente!
-                  </p>
-                </div>
-              </div>
-              <div className="flex justify-center gap-3">
-                <Button
-                  type="button"
-                  variant="primary"
-                  onClick={handleCreateAnother}
-                >
-                  <Plus className="w-4 h-4" /> Crear otro
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleGoToList}
-                >
-                  <List className="w-4 h-4" /> Ir al Listado
-                </Button>
-              </div>
-            </div>
-          )}
+        <CardDescription className="text-primary-600">
+          {isEditMode
+            ? "Modifica los detalles del proceso."
+            : "Crea un nuevo proceso."}
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {formError && (
+          <div className="mb-6 bg-error/10 border-2 border-error rounded-lg p-4 flex items-start gap-3">
+            <AlertCircle className="h-6 w-6 text-error flex-shrink-0 mt-0.5 " />
+            <div>
+              <p className="font-semibold text-error">Error al guardar</p>
+              <p className="text-sm text-error/90 mt-1">{formError}</p>
+            </div>
+          </div>
+        )}
+        {showSuccessMessage && (
+          <div className="mb-6 bg-success/10 border-2 border-success rounded-lg p-4">
+            <div className="flex items-start gap-3 mb-4">
+              <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="font-semibold text-success">
+                  ¡Proceso guardado exitosamente!
+                </p>
+              </div>
+            </div>
+            <div className="flex justify-center gap-3">
+              <Button
+                type="button"
+                variant="primary"
+                onClick={handleCreateAnother}
+              >
+                <Plus className="w-4 h-4" /> Crear otro
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleGoToList}
+              >
+                <List className="w-4 h-4" /> Ir al Listado
+              </Button>
+            </div>
+          </div>
+        )}
         <FormProvider {...methods}>
           <form onSubmit={handleSubmit(onSubmit)} className={formStyle}>
             <Tabs defaultValue="general" className="w-full gap-4">
-              <TabsList className="bg-background justify-start rounded-none p-0 border-b-2 border-border-default">
+              <TabsList className={tabsListStyle} >
                 <TabsTrigger value="general" className={tabsTriggerStyle}>
                   General
                 </TabsTrigger>
@@ -216,13 +221,13 @@ export default function CreateEditForm({
                 <SubProcesosForm IdProceso={proceso?.IdProceso ? proceso.IdProceso : 0} />
               </TabsContent>
               <TabsContent value="requisitos">
-                <div>Requisitos (contenido pendiente)</div>
+                <ProcesoRequisitoForm IdProceso={proceso?.IdProceso ? proceso.IdProceso : 0} />
               </TabsContent>
               <TabsContent value="departamentos">
-                <div>Departamentos (contenido pendiente)</div>
+                <ProcesoDepartamentoForm IdProceso={proceso?.IdProceso ? proceso.IdProceso : 0} />
               </TabsContent>
               <TabsContent value="colaboradores">
-                <div>Colaboradores (contenido pendiente)</div>
+                <ProcesoColaboradorForm IdProceso={proceso?.IdProceso ? proceso.IdProceso : 0} />
               </TabsContent>
             </Tabs>
           </form>

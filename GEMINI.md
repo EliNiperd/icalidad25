@@ -56,6 +56,30 @@ La experiencia de usuario en la carga de datos ha mejorado significativamente. L
 
 -   **Aplicación Generalizada:** El patrón de carga con `Suspense` y `TableSkeleton` se aplicó exitosamente a todos los catálogos existentes (Gerencias, Departamentos, Puestos, Empleados, Requisitos), unificando la experiencia de usuario en toda la aplicación.
 
+## 7. CRUD de Sub-Procesos y Mejoras de UI (Maestro-Detalle)
+
+### Problema Original
+Implementar un CRUD completo para los "Sub-Procesos", que están directamente relacionados con un "Proceso". A diferencia de otros catálogos, la interfaz debía ser un formulario de tipo maestro-detalle, presentado dentro de una pestaña en el formulario principal de edición de Procesos. Adicionalmente, se solicitaron mejoras en la UI para la confirmación de borrado y el estilo de los tabs.
+
+### Acciones Realizadas
+1.  **Componente de Maestro-Detalle (`sub-procesos-form.tsx`):**
+    *   Se desarrolló un componente de cliente único que maneja toda la lógica del CRUD de sub-procesos.
+    *   El componente obtiene el `IdProceso` del formulario padre y busca los sub-procesos asociados usando una Acción de Servidor (`getSubProcesos`).
+    *   Muestra los registros en una "mini-tabla" con opciones para editar y eliminar.
+    *   Integra un formulario (usando `react-hook-form` y `zod`) que aparece y desaparece en el mismo componente para crear o editar registros sin navegar a otra página.
+
+2.  **Depuración de Interacciones de Formulario:**
+    *   Se solucionó un problema crítico de **formularios anidados**, que causaba que el formulario de sub-proceso enviara incorrectamente el formulario principal del proceso. La solución fue eliminar la etiqueta `<form>` interna y activar el envío mediante `form.handleSubmit` en el `onClick` del botón "Guardar".
+    *   Se robustecieron las Acciones de Servidor (`createSubProceso`, etc.) para manejar casos donde la base de datos no retorna un valor, evitando que la aplicación falle silenciosamente y mostrando un mensaje de error claro al usuario.
+
+3.  **Mejoras de UI/UX:**
+    *   **Confirmación de Borrado:** Se reemplazó el `window.confirm()` nativo por un `AlertDialog` de `shadcn/ui`, mejorando la consistencia visual y la experiencia de usuario al eliminar un registro.
+    *   **Estilo de Pestañas (Tabs):** Se aplicaron estilos avanzados a los `Tabs` del formulario de procesos para lograr un diseño profesional, donde el tab activo se conecta visualmente con el panel de contenido, incluyendo bordes, colores y efectos `hover` específicos.
+    *   **Efecto Hover en Tabla:** Se añadió un efecto de resaltado a las filas de la tabla de sub-procesos para mantener la consistencia con otras tablas de la aplicación.
+
+### Resultado
+Se ha implementado exitosamente un CRUD de tipo maestro-detalle para los Sub-Procesos, completamente integrado en la pestaña correspondiente del formulario de Procesos. La solución es robusta, visualmente atractiva y sigue las mejores prácticas de la arquitectura del proyecto.
+
 ## Próximos Pasos (Según Solicitud del Usuario)
 
 1.  **Crear CRUD de Requisitos:** Implementar el catálogo de Requisitos, donde un Requisito depende de una Normativa.

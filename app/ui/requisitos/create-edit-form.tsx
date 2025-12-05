@@ -252,10 +252,10 @@ export default function CreateEditForm({
                 cn( inputStyle, errors.TextoRequisito && errorInputStyle)
               }
             />
-            {errors.NombreRequisito && (
+            {errors.TextoRequisito && (
               <p className={errorTextStyle}>
                 <AlertCircle className={errorIconStyle} />
-                {errors.NombreRequisito.message}
+                {errors.TextoRequisito.message}
               </p>
             )}
           </div>

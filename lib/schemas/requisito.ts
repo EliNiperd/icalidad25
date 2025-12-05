@@ -4,6 +4,8 @@ export interface Requisito {
     IdRequisito: number;
     ClaveRequisito: string;
     NombreRequisito: string;
+    IdNormativa: number;
+    NombreNormativa?: string;
     IdEstatusRequisito: boolean;
     TextoRequisito: string;
 }

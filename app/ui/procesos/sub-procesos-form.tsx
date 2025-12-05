@@ -61,11 +61,14 @@ export default function SubProcesosForm({ IdProceso }: { IdProceso: number }) {
     useState<SubProcesoList | null>(null);
   const [isLoading, startTransition] = useTransition();
 
-  const fetchAndSetSubProcesos = () => {
-    startTransition(async () => {
-      const data = await getSubProcesos(IdProceso);
-      setSubProcesos(data);
-    });
+  const fetchAndSetSubProcesos = async () => {
+    try {
+        const data = await getSubProcesos(IdProceso);
+        setSubProcesos(data);
+    } catch (error) {
+        toast.error("No se pudieron cargar los sub-procesos.");
+        console.error(error);
+    }
   };
 
   useEffect(() => {
@@ -91,7 +94,7 @@ export default function SubProcesosForm({ IdProceso }: { IdProceso: number }) {
       const result = await deleteSubProceso(subprocesoToDelete.IdSubProceso);
       if (result.Resultado === 1) {
         toast.success(result.Mensaje);
-        fetchAndSetSubProcesos();
+        await fetchAndSetSubProcesos();
       } else {
         toast.error(result.Mensaje);
       }
@@ -99,10 +102,10 @@ export default function SubProcesosForm({ IdProceso }: { IdProceso: number }) {
     });
   };
 
-  const onFormFinish = () => {
+  const onFormFinish = async () => {
     setShowForm(false);
     setEditingSubproceso(null);
-    fetchAndSetSubProcesos();
+    await fetchAndSetSubProcesos();
   };
 
   return (
@@ -188,7 +191,8 @@ export default function SubProcesosForm({ IdProceso }: { IdProceso: number }) {
             <AlertDialogTitle>¿Estás absolutamente seguro?</AlertDialogTitle>
             <AlertDialogDescription>
               Esta acción no se puede deshacer. Esto eliminará permanentemente
-              el sub-proceso\n              <span className="font-bold">
+              el sub-proceso
+              <span className="font-bold">
                 {subprocesoToDelete?.DescripcionSubProceso}
               </span>
               .
@@ -213,7 +217,7 @@ export default function SubProcesosForm({ IdProceso }: { IdProceso: number }) {
 interface SubProcesoCUFormProps {
   IdProceso: number;
   subprocesoToEdit: SubProcesoList | null;
-  onFinished: () => void;
+  onFinished: () => Promise<void>;
 }
 
 function SubProcesoCUForm({
@@ -238,7 +242,7 @@ function SubProcesoCUForm({
         const result = await updateSubProceso(subprocesoToEdit!.IdSubProceso, data);
         if (result.Resultado === 200) {
           toast.success(result.Mensaje);
-          onFinished();
+          await onFinished();
         } else {
           toast.error(result.Mensaje);
         }
@@ -246,7 +250,7 @@ function SubProcesoCUForm({
         const result = await createSubProceso(IdProceso, data);
         if (result.Resultado === 201) {
           toast.success(result.Mensaje);
-          onFinished();
+          await onFinished();
         } else {
           toast.error(result.Mensaje);
         }

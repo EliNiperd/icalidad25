@@ -108,11 +108,10 @@
     --color-danger-100: #eb9e9e; 
     --color-danger-200: #d94a4a;
     --color-danger-300: #9c2121;
-    
-    
-
-
   }
+
+ 
+  
 
   body {
     @apply bg-bg-primary text-text-primary;
