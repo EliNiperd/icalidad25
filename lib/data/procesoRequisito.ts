@@ -45,20 +45,15 @@ export async function getProcesoRequisitoDisponible(IdProceso: number): Promise<
   async function asignarRequisito(idProceso: number, idRequisitos: number[] ): Promise<void> {
     try {
       const pool = await usegetPool("Default");
-      const request = await pool.request();
       const typeParam = await typeParameter();
       
       for (const IdRequisito of idRequisitos) {
+        const request = await pool.request();
         request.input("p_IdRequisito", typeParam.Int, IdRequisito);
         request.input("p_IdProceso", typeParam.Int, idProceso);
   
         await request.execute("PI_Gen_RProcesoRequisito");
       }
-  
-      //request.input("p_IdRequisito", typeParam.Int, idRequisitos);
-      //request.input("p_IdProceso", typeParam.Int, idProceso);
-  
-      //await request.execute("PI_Gen_RProcesoRequisito");
     } catch (error) {
       console.error(`Error al asignar el requisito con ID ${idRequisitos} al proceso con ID ${idProceso}:`, error);
     }
@@ -67,19 +62,15 @@ export async function getProcesoRequisitoDisponible(IdProceso: number): Promise<
   async function removerRequisito(idProceso: number,idRequisitos: number[] ): Promise<void> {
     try {
       const pool = await usegetPool("Default");
-      const request = await pool.request();
       const typeParam = await typeParameter();
   
       for (const IdRequisito of idRequisitos) {
+        const request = await pool.request();
         request.input("p_IdRequisito", typeParam.Int, IdRequisito);
         request.input("p_IdProceso", typeParam.Int, idProceso);
   
         await request.execute("PD_Gen_RProcesoRequisito");
       }
-    //   request.input("p_IdRequisito", typeParam.Int, idRequisitos);
-    //   request.input("p_IdProceso", typeParam.Int, idProceso);
-  
-    //   await request.execute("PD_Gen_RProcesoRequisito");
     } catch (error) {
       console.error(`Error al remover el requisito con ID ${idRequisitos} del proceso con ID ${idProceso}:`, error);
     }

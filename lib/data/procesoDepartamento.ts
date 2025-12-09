@@ -48,7 +48,8 @@ export async function getProcesoDepartamentoDisponible(IdProceso: number): Promi
       const request = await pool.request();
       const typeParam = await typeParameter();
       
-      for (const IdDepartamento of idDepartamentos) {
+    for (const IdDepartamento of idDepartamentos) {
+        const request = await pool.request();
         request.input("p_IdDepartamento", typeParam.Int, IdDepartamento);
         request.input("p_IdProceso", typeParam.Int, idProceso);
   
@@ -65,7 +66,8 @@ export async function getProcesoDepartamentoDisponible(IdProceso: number): Promi
       const request = await pool.request();
       const typeParam = await typeParameter();
   
-      for (const IdDepartamento of idDepartamentos) {
+    for (const IdDepartamento of idDepartamentos) {
+        const request = await pool.request();
         request.input("p_IdDepartamento", typeParam.Int, IdDepartamento);
         request.input("p_IdProceso", typeParam.Int, idProceso);
   

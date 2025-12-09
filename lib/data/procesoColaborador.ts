@@ -15,7 +15,7 @@ export async function getProcesoColaboradorDisponible(IdProceso: number): Promis
   
       request.input("p_IdProceso", typeParam.Int, IdProceso);
   
-      const result = await request.execute("PF_Gen_RProcesoColaboradorDisponible");
+      const result = await request.execute("PF_Gen_RProcesoEmpleadoDisponible");
       return result.recordset as ProcesoColaboradorList[];
     } catch (error) {
       console.error(`Error al obtener los colaboradores disponibles para el proceso con ID ${IdProceso}:`, error);
@@ -31,7 +31,7 @@ export async function getProcesoColaboradorDisponible(IdProceso: number): Promis
   
       request.input("p_IdProceso", typeParam.Int, IdProceso);
   
-      const result = await request.execute("PF_Gen_RProcesoColaborador");
+      const result = await request.execute("PF_Gen_RProcesoEmpleado");
       return result.recordset as ProcesoColaboradorList[];
     } catch (error) {
       console.error(`Error al obtener los colaboradores asignados para el proceso con ID ${IdProceso}:`, error);
@@ -48,11 +48,12 @@ export async function getProcesoColaboradorDisponible(IdProceso: number): Promis
       const request = await pool.request();
       const typeParam = await typeParameter();
       
-      for (const IdEmpleado of idEmpleados) {
+    for (const IdEmpleado of idEmpleados) {
+        const request = await pool.request();
         request.input("p_IdEmpleado", typeParam.Int, IdEmpleado);
         request.input("p_IdProceso", typeParam.Int, idProceso);
   
-        await request.execute("PI_Gen_RProcesoColaborador");
+        await request.execute("PI_Gen_RProcesoEmpleado");
       }
     } catch (error) {
       console.error(`Error al asignar el colaborador con ID ${idEmpleados} al proceso con ID ${idProceso}:`, error);
@@ -65,11 +66,12 @@ export async function getProcesoColaboradorDisponible(IdProceso: number): Promis
       const request = await pool.request();
       const typeParam = await typeParameter();
   
-      for (const IdEmpleado of idEmpleados) {
+    for (const IdEmpleado of idEmpleados) {
+        const request = await pool.request();
         request.input("p_IdEmpleado", typeParam.Int, IdEmpleado);
         request.input("p_IdProceso", typeParam.Int, idProceso);
   
-        await request.execute("PD_Gen_RProcesoColaborador");
+        await request.execute("PD_Gen_RProcesoEmpleado");
       }
     } catch (error) {
       console.error(`Error al remover el colaborador con ID ${idEmpleados} del proceso con ID ${idProceso}:`, error);
