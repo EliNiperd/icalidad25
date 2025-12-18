@@ -102,6 +102,7 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
       },
     }),
   ],
+  trustHost: true,
   callbacks: {
     // Extendemos el token JWT con los datos personalizados
     jwt({ token, user }) {
