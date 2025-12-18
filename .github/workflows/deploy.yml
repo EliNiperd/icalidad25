@@ -1,0 +1,63 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GHCR_TOKEN }}
+
+      - name: Build and push image
+        run: |
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          IMAGE_NAME=ghcr.io/$OWNER/icalidad:latest
+
+          docker build -t $IMAGE_NAME .
+          docker push $IMAGE_NAME
+
+      - name: Deploy on VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /var/www/icalidad
+
+            git pull
+
+            docker stop icalidad || true
+            docker rm icalidad || true
+
+            OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+            IMAGE_NAME=ghcr.io/$OWNER/icalidad:latest
+
+            docker pull $IMAGE_NAME
+
+            docker run -d \
+              --name icalidad \
+              -p 8084:3000 \
+              -e DB_HOST="${{ secrets.DB_HOST }}" \
+              -e DB_PORT="${{ secrets.DB_PORT }}" \
+              -e DB_USER="${{ secrets.DB_USER }}" \
+              -e DB_PASS="${{ secrets.DB_PASS }}" \
+              -e DB_NAME="${{ secrets.DB_NAME }}" \
+              -e NEXTAUTH_URL="${{ secrets.NEXTAUTH_URL }}" \
+              -e NEXTAUTH_SECRET="${{ secrets.NEXTAUTH_SECRET }}" \
+              -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
+              -e SECRET="${{ secrets.SECRET }}" \
+              $IMAGE_NAME
+
+            docker image prune -f
