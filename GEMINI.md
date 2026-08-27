@@ -80,8 +80,32 @@ Implementar un CRUD completo para los "Sub-Procesos", que están directamente re
 ### Resultado
 Se ha implementado exitosamente un CRUD de tipo maestro-detalle para los Sub-Procesos, completamente integrado en la pestaña correspondiente del formulario de Procesos. La solución es robusta, visualmente atractiva y sigue las mejores prácticas de la arquitectura del proyecto.
 
+## 8. Infraestructura de Base de Datos y Acceso Seguro (VPS)
+
+### Problema Original
+Migrar y desplegar la base de datos SQL Server en el VPS usando Docker de manera que sea accesible, segura y persistente, facilitando también la conexión directa sin contraseñas a través de SSH utilizando un usuario restringido.
+
+### Acciones Realizadas
+1.  **Seguridad y SSH:**
+    *   Se creó un usuario restringido sin acceso root directo (`icalidad-user`) en el VPS.
+    *   Se integraron permisos para que este usuario pueda administrar Docker y comandos sudo sin recurrir al root directo.
+    *   Se configuró el acceso por llaves SSH (`id_ed25519`) desde la laptop Windows 11 del usuario para permitir login automático sin solicitar contraseña.
+2.  **Contenedor Docker SQL Server:**
+    *   Se diseñó y levantó un archivo `docker-compose.yml` para levantar la versión Developer de **Microsoft SQL Server 2022** con volumen persistente.
+    *   Se mapeó la conexión al puerto seguro del host `1435` redirigido al interno `1433`.
+3.  **Restauración de Base de Datos:**
+    *   Se copió el respaldo `.bak` (`28-ago-25-iCalidad.bak`) al contenedor.
+    *   Se ejecutaron comandos de restauración mapeando correctamente los nombres lógicos de archivos a la estructura de archivos en Linux (Docker).
+    *   Se configuró exitosamente la conexión en DBeaver configurando las directivas `trustServerCertificate=true` y `encrypt=true`.
+
+### Resultado
+La base de datos se encuentra desplegada, restaurada y conectada en un entorno VPS robusto mediante Docker, con accesos seguros y sin contraseñas configurados.
+
+---
+
 ## Próximos Pasos (Según Solicitud del Usuario)
 
-1.  **Crear CRUD de Requisitos:** Implementar el catálogo de Requisitos, donde un Requisito depende de una Normativa.
-2.  **Implementar SPs Faltantes:** El usuario debe completar la lógica de los Stored Procedures para los catálogos que aún no están finalizados (ej. Puestos).
-3.  **Implementar Tablas de Datos:** Crear los componentes `...-table-wrapper.tsx` para los catálogos que aún no los tienen (ej. Puestos, Empleados).
+1.  **Backend en C# o .NET con Clean Architecture:** Diseñar y construir el backend en .NET aplicando Arquitectura Limpia para establecer una capa intermedia de servicios robusta, desacoplada y escalable.
+2.  **Crear CRUD de Requisitos:** Implementar el catálogo de Requisitos, donde un Requisito depende de una Normativa.
+3.  **Implementar SPs Faltantes:** Completar la lógica de los Stored Procedures para los catálogos que aún no están finalizados (ej. Puestos).
+4.  **Implementar Tablas de Datos:** Crear los componentes `...-table-wrapper.tsx` para los catálogos que aún no los tienen (ej. Puestos, Empleados).
