@@ -103,9 +103,23 @@ La base de datos se encuentra desplegada, restaurada y conectada en un entorno V
 
 ---
 
-## Próximos Pasos (Según Solicitud del Usuario)
+## Plan de Atención General (Roadmap de Migración)
 
-1.  **Backend en C# o .NET con Clean Architecture:** Diseñar y construir el backend en .NET aplicando Arquitectura Limpia para establecer una capa intermedia de servicios robusta, desacoplada y escalable.
-2.  **Crear CRUD de Requisitos:** Implementar el catálogo de Requisitos, donde un Requisito depende de una Normativa.
-3.  **Implementar SPs Faltantes:** Completar la lógica de los Stored Procedures para los catálogos que aún no están finalizados (ej. Puestos).
-4.  **Implementar Tablas de Datos:** Crear los componentes `...-table-wrapper.tsx` para los catálogos que aún no los tienen (ej. Puestos, Empleados).
+Para llevar el proyecto a un nivel profesional, robusto y escalable, seguiremos este plan estructurado paso a paso:
+
+### Fase 1: Verificación de Conectividad Actual
+*   **Objetivo:** Validar que la aplicación Next.js actual en producción/desarrollo pueda realizar login e interactuar correctamente con la nueva instancia de SQL Server restaurada en el VPS Docker.
+
+### Fase 2: Estructura Inicial del Backend (.NET 10 & Clean Architecture)
+*   **Objetivo:** Crear la solución base en C# usando la CLI de .NET 10 siguiendo los principios de Arquitectura Limpia.
+*   **Proyectos a crear:**
+    1.  `iCalidad.Domain` (Entidades, Interfaces y Reglas de Negocio base).
+    2.  `iCalidad.Application` (Casos de Uso, DTOs, Mapeadores, Validaciones y Lógica de Aplicación).
+    3.  `iCalidad.Infrastructure` (Implementación de Persistencia con Entity Framework Core, servicios externos y seguridad).
+    4.  `iCalidad.WebAPI` (Controladores, Endpoint mappings, Middleware de manejo de errores y Configuración de Dependencias).
+
+### Fase 3: Estrategia de Persistencia (Adopción de Entity Framework Core)
+*   **Objetivo:** Sustituir progresivamente la dependencia actual de Stored Procedures (SPs) por consultas LINQ y migraciones controladas de EF Core para mejorar la mantenibilidad, estabilidad y facilidad de pruebas.
+
+### Fase 4: Primera API - Módulo de Seguridad y Autenticación
+*   **Objetivo:** Diseñar y codificar la primera API funcional enfocada en la autenticación, autorización y seguridad de usuarios, la cual servirá como plantilla de diseño para la posterior migración de los catálogos restantes (Gerencias, Departamentos, Puestos, Empleados, Requisitos).
