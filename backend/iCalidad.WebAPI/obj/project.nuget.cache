@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "CuYji1w48Hk=",
+  "success": true,
+  "projectFilePath": "D:\\proyectos\\icalidad25\\backend\\iCalidad.WebAPI\\iCalidad.WebAPI.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\eliro\\.nuget\\packages\\microsoft.aspnetcore.openapi\\9.0.19\\microsoft.aspnetcore.openapi.9.0.19.nupkg.sha512",
+    "C:\\Users\\eliro\\.nuget\\packages\\microsoft.openapi\\1.6.17\\microsoft.openapi.1.6.17.nupkg.sha512"
+  ],
+  "logs": []
+}
