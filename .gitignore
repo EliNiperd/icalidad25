@@ -45,3 +45,9 @@ next-env.d.ts
 
 # lib/database omitir
 /lib/database/*.sql
+
+# Scripts Sql Server
+/infrastructure/Scripts
+
+# unlighthouse
+.unlighthouse
