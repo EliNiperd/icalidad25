@@ -5,7 +5,7 @@ WORKDIR /app
 RUN npm install -g pnpm
 
 COPY package.json pnpm-lock.yaml* pnpm-workspace.yaml* .npmrc* ./
-RUN pnpm install
+RUN pnpm config set only-built-dependencies bcrypt,unrs-resolver && pnpm install
 
 COPY . .
 RUN pnpm build
