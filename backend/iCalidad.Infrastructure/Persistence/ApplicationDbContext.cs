@@ -1,4 +1,6 @@
+using System.Reflection;
 using Microsoft.EntityFrameworkCore;
+using iCalidad.Domain.Entities;
 
 namespace iCalidad.Infrastructure.Persistence
 {
@@ -9,11 +11,16 @@ namespace iCalidad.Infrastructure.Persistence
         {
         }
 
+        public DbSet<Empleado> Empleados => Set<Empleado>();
+        public DbSet<Rol> Roles => Set<Rol>();
+        public DbSet<EmpleadoRol> EmpleadosRoles => Set<EmpleadoRol>();
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            // Aquí se configurarán las relaciones y el mapeo de tablas (Fluent API)
+            // Aplica dinámicamente todas las configuraciones del ensamblado de Infraestructura
+            modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
         }
     }
 }
