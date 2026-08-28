@@ -118,8 +118,14 @@ Para llevar el proyecto a un nivel profesional, robusto y escalable, seguiremos 
     3.  `iCalidad.Infrastructure` (Implementación de Persistencia con Entity Framework Core, servicios externos y seguridad).
     4.  `iCalidad.WebAPI` (Controladores, Endpoint mappings, Middleware de manejo de errores y Configuración de Dependencias).
 
-### Fase 3: Estrategia de Persistencia (Adopción de Entity Framework Core)
+### Fase 3: Estrategia de Persistencia y Flexibilidad de Motor (Entity Framework Core)
 *   **Objetivo:** Sustituir progresivamente la dependencia actual de Stored Procedures (SPs) por consultas LINQ y migraciones controladas de EF Core para mejorar la mantenibilidad, estabilidad y facilidad de pruebas.
+*   **Enfoque Multi-Cliente y Multi-Base de Datos:**
+    *   La arquitectura está diseñada para ser agnóstica al motor de base de datos. La lógica de negocio reside únicamente en `Domain` y `Application`, las cuales no tienen conocimiento del motor utilizado (SQL Server, Oracle, MySQL, etc.).
+    *   En `Infrastructure`, registraremos el `DbContext` utilizando interfaces genéricas.
+    *   Para dar soporte a un nuevo motor de base de datos para un cliente específico, el proceso consistirá en:
+        1. Instalar el proveedor de EF Core correspondiente (ej. `Pomelo.EntityFrameworkCore.MySql` para MySQL, u `Oracle.EntityFrameworkCore` para Oracle).
+        2. Configurar la inyección de dependencias en `iCalidad.WebAPI` para seleccionar el proveedor adecuado basándose en una variable de entorno (`DB_PROVIDER`) y la cadena de conexión correspondiente.
 
 ### Fase 4: Primera API - Módulo de Seguridad y Autenticación
 *   **Objetivo:** Diseñar y codificar la primera API funcional enfocada en la autenticación, autorización y seguridad de usuarios, la cual servirá como plantilla de diseño para la posterior migración de los catálogos restantes (Gerencias, Departamentos, Puestos, Empleados, Requisitos).
