@@ -1,10 +1,11 @@
 using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 using iCalidad.Domain.Entities;
+using iCalidad.Application.Common.Interfaces;
 
 namespace iCalidad.Infrastructure.Persistence
 {
-    public class ApplicationDbContext : DbContext
+    public class ApplicationDbContext : DbContext, IApplicationDbContext
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)

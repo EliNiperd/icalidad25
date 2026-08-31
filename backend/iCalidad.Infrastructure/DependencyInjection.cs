@@ -2,6 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using iCalidad.Infrastructure.Persistence;
+using iCalidad.Infrastructure.Security;
+using iCalidad.Application.Common.Interfaces;
 
 namespace iCalidad.Infrastructure
 {
@@ -25,6 +27,13 @@ namespace iCalidad.Infrastructure
             //         options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString),
             //             b => b.MigrationsAssembly("iCalidad.WebAPI")));
             // }
+
+            // Registramos la interfaz apuntando al DbContext concreto
+            services.AddScoped<IApplicationDbContext>(provider => 
+                provider.GetRequiredService<ApplicationDbContext>());
+
+            // Registramos el generador de tokens JWT
+            services.AddScoped<ITokenService, TokenService>();
 
             return services;
         }
