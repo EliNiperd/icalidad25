@@ -14,6 +14,8 @@ export interface AuthApiResponse {
   userName: string;
   correo: string | null;
   imageEmpleado: string | null;
+  idRol: number;
+  nombreRol: string;
   roles: string[];
   token: string;
 }
@@ -95,8 +97,8 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
           username: user.userName,
           roles: user.roles,
           token: user.token,
-          idRol: 1,
-          nombreRol: user.roles && user.roles.length > 0 ? user.roles[0] : "",
+          idRol: user.idRol,
+          nombreRol: user.nombreRol || (user.roles && user.roles.length > 0 ? user.roles[0] : ""),
         };
       },
     }),

@@ -61,3 +61,5 @@ next-env.d.ts
 *.userosscache
 *.sln.docstates
 .vs/
+appsettings.Development.json
+appsettings.Local.json

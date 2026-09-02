@@ -1,8 +1,9 @@
 'use server';
 
-import { signIn, loginWithBackendAPI } from '@/auth';
+import { signIn } from '@/auth';
 import { redirect } from 'next/navigation';
 import { decryptPassword } from '@/lib/utils/security';
+import { AuthError } from 'next-auth';
 
 export async function authenticate(
   prevState: string | undefined,
@@ -22,20 +23,11 @@ export async function authenticate(
       password = decryptPassword(password);
     } catch (error) {
       console.error('❌ Error al desencriptar:', error);
-      throw new Error('Error de seguridad al procesar la contraseña');
+      throw new Error('Error de seguridad al procesar la contraseña.');
     }
   }
 
-  // Validar credenciales con el backend .NET
-  const authResult = await loginWithBackendAPI(username, password);
-
-  if (!authResult.success) {
-    const errorMessage = authResult.message || 'Error de autenticación';
-    console.error('❌ Error:', errorMessage);
-    throw new Error(errorMessage);
-  }
-
-  // Crear la sesión en NextAuth con el token JWT
+  // Autenticar mediante NextAuth (llama al backend .NET una única vez en authorize)
   try {
     await signIn('credentials', {
       username,
@@ -43,8 +35,16 @@ export async function authenticate(
       redirect: false,
     });
   } catch (error) {
-    console.error('❌ Error al crear sesión con signIn:', error);
-    throw new Error('Error interno al iniciar sesión.');
+    if (error instanceof AuthError) {
+      switch (error.type) {
+        case 'CredentialsSignin':
+          throw new Error('Usuario o contraseña incorrectos, o cuenta inactiva.');
+        default:
+          throw new Error('Error de autenticación con el servidor.');
+      }
+    }
+    // En caso de redirect de Next.js u otro error
+    throw error;
   }
 
   redirect('/icalidad/dashboard');

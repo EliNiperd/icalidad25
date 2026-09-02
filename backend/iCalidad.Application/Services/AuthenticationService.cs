@@ -23,7 +23,7 @@ namespace iCalidad.Application.Services
 
             if (empleado == null)
             {
-                return null; // El controlador se encargará de mapear esto a "Credenciales inválidas"
+                return null;
             }
 
             // 2. Validar estatus activo
@@ -32,31 +32,60 @@ namespace iCalidad.Application.Services
                 return null;
             }
 
-            // 3. Validar contraseña (compatible con el texto plano actual en la BD de iCalidad)
-            if (empleado.Password != request.Password)
+            // 3. Validar contraseña (soporta tanto hashes BCrypt como texto plano heredado de la BD actual)
+            if (!VerifyPassword(request.Password, empleado.Password))
             {
                 return null;
             }
 
-            // 4. Obtener los nombres de roles asociados al empleado
-            var roles = await _context.EmpleadosRoles
+            // 4. Obtener roles asociados al empleado
+            var rolesData = await _context.EmpleadosRoles
                 .Where(er => er.IdEmpleado == empleado.IdEmpleado)
-                .Select(er => er.Rol.NombreRol)
+                .Select(er => new { er.IdRol, er.Rol.NombreRol })
                 .ToListAsync();
 
+            var rolesList = rolesData.Select(r => r.NombreRol).ToList();
+            var primaryRole = rolesData.FirstOrDefault();
+
             // 5. Generar token JWT firmado
-            var token = _tokenService.GenerateToken(empleado, roles);
+            var token = _tokenService.GenerateToken(empleado, rolesList);
 
             return new AuthResponse
             {
                 IdEmpleado = empleado.IdEmpleado,
                 NombreEmpleado = empleado.NombreEmpleado,
                 UserName = empleado.UserName,
-                Correo = empleado.Correo, // Retorna null de forma segura si no tiene
-                ImageEmpleado = empleado.ImageEmpleado, // Retorna null de forma segura si no tiene
-                Roles = roles,
+                Correo = empleado.Correo,
+                ImageEmpleado = empleado.ImageEmpleado,
+                IdRol = primaryRole?.IdRol ?? 0,
+                NombreRol = primaryRole?.NombreRol ?? string.Empty,
+                Roles = rolesList,
                 Token = token
             };
+        }
+
+        private static bool VerifyPassword(string providedPassword, string storedPassword)
+        {
+            if (string.IsNullOrEmpty(storedPassword) || string.IsNullOrEmpty(providedPassword))
+            {
+                return false;
+            }
+
+            // Si la contraseña almacenada es un hash BCrypt válido ($2a$, $2b$, $2y$)
+            if (storedPassword.StartsWith("$2a$") || storedPassword.StartsWith("$2b$") || storedPassword.StartsWith("$2y$"))
+            {
+                try
+                {
+                    return BCrypt.Net.BCrypt.Verify(providedPassword, storedPassword);
+                }
+                catch
+                {
+                    return false;
+                }
+            }
+
+            // Fallback para contraseñas en texto plano de la base de datos actual
+            return storedPassword == providedPassword;
         }
     }
 }

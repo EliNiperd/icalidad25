@@ -8,10 +8,15 @@ const getBaseUrl = () => {
   );
 };
 
-interface FetchOptions extends RequestInit {
+export interface FetchOptions extends RequestInit {
   token?: string;
 }
 
+/**
+ * Cliente HTTP unificado para comunicar Next.js con el backend .NET.
+ * - En Server Components / Server Actions: Extrae automáticamente el token JWT de la sesión.
+ * - En Client Components: Acepta el token pasado como opción { token: session.user.token }.
+ */
 export async function apiFetch<T = any>(
   endpoint: string,
   options: FetchOptions = {}
@@ -19,14 +24,15 @@ export async function apiFetch<T = any>(
   const baseUrl = getBaseUrl();
   const url = `${baseUrl}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
 
-  // Si no se proporciona token explícito, intentamos obtenerlo de la sesión del servidor (si estamos en SSR/Server Action)
   let authToken = options.token;
+
+  // En entorno de servidor (Server Actions o SSR), obtenemos el token de la sesión automáticamente si no se pasó uno
   if (!authToken && typeof window === "undefined") {
     try {
       const session = await auth();
       authToken = session?.user?.token;
     } catch {
-      // Si falla obtener la sesión, continuamos sin token
+      // Continuar sin token si no hay sesión disponible
     }
   }
 
@@ -50,12 +56,11 @@ export async function apiFetch<T = any>(
         errorMessage = errorData.message;
       }
     } catch {
-      // Si no es JSON, mantenemos el mensaje de estado HTTP
+      // Mantener mensaje por defecto si no hay body JSON
     }
     throw new Error(errorMessage);
   }
 
-  // Si la respuesta no tiene contenido (ej. 204 No Content)
   if (response.status === 204) {
     return {} as T;
   }
