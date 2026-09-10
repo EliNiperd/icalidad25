@@ -22,13 +22,19 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GHCR_TOKEN }}
 
-      - name: Build and push image
+      - name: Build and push Backend & Frontend images
         run: |
           OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
-          IMAGE_NAME=ghcr.io/$OWNER/icalidad:latest
+          FRONTEND_IMAGE=ghcr.io/$OWNER/icalidad-frontend:latest
+          BACKEND_IMAGE=ghcr.io/$OWNER/icalidad-backend:latest
 
-          docker build -t $IMAGE_NAME -f frontend/dockerfile frontend
-          docker push $IMAGE_NAME
+          # Compilar y subir Backend .NET
+          docker build -t $BACKEND_IMAGE -f backend/dockerfile backend
+          docker push $BACKEND_IMAGE
+
+          # Compilar y subir Frontend Next.js
+          docker build -t $FRONTEND_IMAGE -f frontend/dockerfile frontend
+          docker push $FRONTEND_IMAGE
 
       - name: Deploy on VPS
         uses: appleboy/ssh-action@v1.0.3
@@ -41,26 +47,55 @@ jobs:
 
             git pull
 
-            docker stop icalidad || true
-            docker rm icalidad || true
-
             OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
-            IMAGE_NAME=ghcr.io/$OWNER/icalidad:latest
+            FRONTEND_IMAGE=ghcr.io/$OWNER/icalidad-frontend:latest
+            BACKEND_IMAGE=ghcr.io/$OWNER/icalidad-backend:latest
 
-            docker pull $IMAGE_NAME
+            # Crear red privada si no existe
+            docker network create icalidad-net || true
 
+            # Detener contenedores anteriores
+            docker stop icalidad-nginx icalidad-frontend icalidad-backend icalidad || true
+            docker rm icalidad-nginx icalidad-frontend icalidad-backend icalidad || true
+
+            # Descargar nuevas imágenes
+            docker pull $BACKEND_IMAGE
+            docker pull $FRONTEND_IMAGE
+            docker pull nginx:alpine
+
+            # 1. Iniciar Backend .NET (sin puertos públicos, solo red interna)
             docker run -d \
-              --name icalidad \
-              -p 8084:3000 \
-              -e DB_HOST="${{ secrets.DB_HOST }}" \
-              -e DB_PORT="${{ secrets.DB_PORT }}" \
-              -e DB_USER="${{ secrets.DB_USER }}" \
-              -e DB_PASS="${{ secrets.DB_PASS }}" \
-              -e DB_NAME="${{ secrets.DB_NAME }}" \
+              --name icalidad-backend \
+              --network icalidad-net \
+              --restart unless-stopped \
+              -e ASPNETCORE_ENVIRONMENT=Production \
+              -e DB_PROVIDER=SqlServer \
+              -e ConnectionStrings__DefaultConnection="Server=${{ secrets.DB_HOST }},${{ secrets.DB_PORT }};Database=${{ secrets.DB_NAME }};User Id=${{ secrets.DB_USER }};Password=${{ secrets.DB_PASS }};TrustServerCertificate=True;Encrypt=True;" \
+              -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
+              -e JWT_ISSUER="iCalidadAPI" \
+              -e JWT_AUDIENCE="iCalidadClients" \
+              $BACKEND_IMAGE
+
+            # 2. Iniciar Frontend Next.js (sin puertos públicos, solo red interna)
+            docker run -d \
+              --name icalidad-frontend \
+              --network icalidad-net \
+              --restart unless-stopped \
+              -e BACKEND_API_URL="http://icalidad-backend:5175/api" \
+              -e NEXT_PUBLIC_API_URL="/api" \
               -e NEXTAUTH_URL="${{ secrets.NEXTAUTH_URL }}" \
               -e NEXTAUTH_SECRET="${{ secrets.NEXTAUTH_SECRET }}" \
               -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
               -e SECRET="${{ secrets.SECRET }}" \
-              $IMAGE_NAME
+              $FRONTEND_IMAGE
+
+            # 3. Iniciar Nginx Reverse Proxy (escucha en el puerto 8084 del VPS)
+            docker run -d \
+              --name icalidad-nginx \
+              --network icalidad-net \
+              --restart unless-stopped \
+              -p 8084:80 \
+              -v /var/www/icalidad/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro \
+              nginx:alpine
 
             docker image prune -f
