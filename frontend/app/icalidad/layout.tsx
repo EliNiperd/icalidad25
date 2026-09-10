@@ -17,13 +17,12 @@ export default async function IcalidadLayout({
     redirect("/login");
   }
 
-  const idEmpleado = parseInt(session.user.id);
-  const idRol = session.user.idRol;
-
   let menuTree: MenuItem[] = [];
-  if (idEmpleado && idRol) {
-    const rawMenuItems = await getRawMenuItems(idEmpleado, idRol, null);
+  try {
+    const rawMenuItems = await getRawMenuItems();
     menuTree = buildMenuTree(rawMenuItems);
+  } catch (error) {
+    console.error("Error building menu tree:", error);
   }
 
   return (

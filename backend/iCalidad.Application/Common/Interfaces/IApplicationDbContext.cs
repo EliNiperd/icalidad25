@@ -8,6 +8,7 @@ namespace iCalidad.Application.Common.Interfaces
         DbSet<Empleado> Empleados { get; }
         DbSet<Rol> Roles { get; }
         DbSet<EmpleadoRol> EmpleadosRoles { get; }
+        DbSet<Menu> Menus { get; }
 
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     }

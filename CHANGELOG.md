@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Integration of Entity Framework Core in the `iCalidad.Infrastructure` project, including configurations for intermediate tables and Fluent API mapping.
 - Implementation of the first API module: Security and Authentication utilizing JWT Bearer Token generation, claims-based authorization, and custom user response validation.
 - Migration of Frontend NextAuth authentication to consume the .NET Web API (`/api/auth/login`) instead of direct database Stored Procedures.
+- Migration of Dynamic Menu Module to .NET WebAPI (`/api/menu`) with Entity Framework Core, eliminating direct database connections in `lib/data/menu.ts`.
+- Retired legacy authentication and menu Stored Procedures (`usp_AuthenticateUser`, `usp_GetMenuByEmployeeIdAndRole`) in favor of Clean Architecture services and REST APIs.
 - Creation of centralized API client (`frontend/lib/api-client.ts`) with automatic JWT Bearer token injection for all backend requests.
 - Setup of a database query CLI utility (`scripts/db-query.js`) to execute queries against the SQL Server instance from the local Windows environment.
 - Configured SSH passwordless access key setup from Windows 11 laptop to VPS for `icalidad-user`.

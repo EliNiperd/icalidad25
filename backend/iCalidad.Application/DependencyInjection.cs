@@ -9,6 +9,7 @@ namespace iCalidad.Application
         public static IServiceCollection AddApplication(this IServiceCollection services)
         {
             services.AddScoped<IAuthenticationService, AuthenticationService>();
+            services.AddScoped<IMenuService, MenuService>();
             return services;
         }
     }
