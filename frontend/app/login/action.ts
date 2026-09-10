@@ -1,20 +1,27 @@
 'use server';
 
 import { signIn } from '@/auth';
-import { redirect } from 'next/navigation';
 import { decryptPassword } from '@/lib/utils/security';
 import { AuthError } from 'next-auth';
 
+export interface AuthenticateResult {
+  success: boolean;
+  error?: string;
+}
+
 export async function authenticate(
-  prevState: string | undefined,
+  prevState: any,
   formData: FormData
-): Promise<void> {
+): Promise<AuthenticateResult> {
   const username = formData.get('username') as string;
   let password = formData.get('password') as string;
   const isEncrypted = formData.get('encrypted') === 'true';
 
   if (!username || !password) {
-    throw new Error('Por favor ingresa tu usuario y contraseña.');
+    return {
+      success: false,
+      error: 'Por favor ingresa tu usuario y contraseña.',
+    };
   }
 
   // Desencriptar la contraseña si viene encriptada
@@ -22,30 +29,43 @@ export async function authenticate(
     try {
       password = decryptPassword(password);
     } catch (error) {
-      console.error('❌ Error al desencriptar:', error);
-      throw new Error('Error de seguridad al procesar la contraseña.');
+      console.error('❌ Error al desencriptar contraseña:', error);
+      return {
+        success: false,
+        error: 'Error de seguridad al procesar la contraseña.',
+      };
     }
   }
 
-  // Autenticar mediante NextAuth (llama al backend .NET una única vez en authorize)
+  // Autenticar mediante NextAuth
   try {
-    await signIn('credentials', {
+    const result = await signIn('credentials', {
       username,
       password,
       redirect: false,
     });
+
+    return { success: true };
   } catch (error) {
     if (error instanceof AuthError) {
       switch (error.type) {
         case 'CredentialsSignin':
-          throw new Error('Usuario o contraseña incorrectos, o cuenta inactiva.');
+          return {
+            success: false,
+            error: 'Usuario o contraseña incorrectos, o cuenta inactiva.',
+          };
         default:
-          throw new Error('Error de autenticación con el servidor.');
+          return {
+            success: false,
+            error: 'Error al comunicarse con el servicio de autenticación.',
+          };
       }
     }
-    // En caso de redirect de Next.js u otro error
-    throw error;
-  }
 
-  redirect('/icalidad/dashboard');
+    console.error('❌ Error inesperado en login:', error);
+    return {
+      success: false,
+      error: 'Error de conexión con el backend. Verifica que la API esté disponible.',
+    };
+  }
 }
