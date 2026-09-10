@@ -103,6 +103,59 @@ La base de datos se encuentra desplegada, restaurada y conectada en un entorno V
 
 ---
 
+## 9. Migración del Módulo de Menú Dinámico a .NET WebAPI & EF Core
+
+### Problema Original
+El menú lateral de la aplicación dependía de llamadas directas a la base de datos mediante el cliente `mssql` de Node.js y la ejecución de un Stored Procedure (`usp_GetMenuByEmployeeIdAndRole`). Esto acoplaba el frontend directamente al motor de base de datos e impedía la centralización de la seguridad y el control de accesos en el backend de C# .NET.
+
+### Acciones Realizadas
+1. **Entidad y Mapeo en Persistencia:**
+   - Se definió la entidad `Menu` en `iCalidad.Domain` y se implementó su mapeo Fluent API en `MenuConfiguration.cs` (`iCalidad.Infrastructure`) hacia la tabla existente `Gen_TMenu`.
+2. **Lógica de Aplicación (Application Layer):**
+   - Se creó el servicio `MenuService` y la interfaz `IMenuService` en `iCalidad.Application`.
+   - Consulta los roles del empleado en `EmpleadosRoles`, filtra los menús activos (`IdEstatusMenu` 1 y 2), realiza deduplicación en memoria para empleados con múltiples roles y ordena jerárquicamente por `OrdenMenu`.
+3. **Endpoint REST Protegido:**
+   - Se desarrolló `MenuController` (`GET /api/menu`) en `iCalidad.WebAPI` protegido por `[Authorize]`, extrayendo de forma segura el identificador del empleado autenticado a partir de los claims (`ClaimTypes.NameIdentifier` / `sub`) del token JWT.
+4. **Integración con Frontend Next.js:**
+   - Se refactorizó `frontend/lib/data/menu.ts` para consumir el endpoint `/menu` a través del cliente centralizado `apiFetch`, propagando automáticamente el JWT Bearer token de la sesión.
+   - Se añadió protección con bloque `try/catch` en `frontend/app/icalidad/layout.tsx` para evitar caídas de renderizado y proveer degradación elegante.
+
+### Resultado
+El módulo de navegación dinámica quedó 100% desacoplado de la base de datos en el frontend, operando a través de la API REST de .NET con validación de seguridad por token JWT y cumpliendo los principios de Arquitectura Limpia.
+
+---
+
+## 10. Diagnóstico y Resolución de Errores 502 Bad Gateway en Nginx (Docker DNS vs Host Mapping)
+
+### Problema Original
+Al desplegar el stack completo en el VPS mediante Docker, Nginx retornaba intermitentemente errores `502 Bad Gateway` al intentar acceder a la aplicación frontend o a los endpoints de la API.
+
+### Causa Raíz
+1. **Fallo de Resolución DNS en Docker (`SERVFAIL`)**:
+   - En el host Ubuntu 24.04 del VPS, `systemd-resolved` configuraba la directiva `search .` en `/etc/resolv.conf`.
+   - Al heredar esta configuración, las consultas DNS dentro de contenedores Alpine (`nginx:alpine` con musl libc) agregaban un punto final a los nombres de host (`icalidad-frontend.`), provocando que el servidor DNS interno de Docker (`127.0.0.11`) no encontrara coincidencia y retornara `SERVFAIL`.
+2. **Comportamiento de Nginx con Upstreams Dinámicos**:
+   - Al fallar la resolución de nombres en el arranque o durante las peticiones, Nginx no lograba enrutar a `icalidad-frontend:3000` o `icalidad-backend:5175`, respondiendo inmediatamente con `502 Bad Gateway`.
+
+### Acciones Realizadas
+1. **Definición de Subred Estática en Docker Network**:
+   - Se recreó la red `icalidad-net` con una subred explícita fija: `172.23.0.0/16`.
+2. **Asignación de IPs Fijas Internas**:
+   - Backend (`icalidad-backend`): `172.23.0.2`
+   - Frontend (`icalidad-frontend`): `172.23.0.3`
+   - Nginx (`icalidad-nginx`): `172.23.0.4`
+   - Base de Datos (`icalidad-sqlserver`): `172.23.0.10`
+3. **Mapeo Directo de Hosts (`--add-host`)**:
+   - Se configuraron banderas `--add-host icalidad-frontend:172.23.0.3` e `--add-host icalidad-backend:172.23.0.2` en el contenedor de Nginx y Frontend.
+   - Esto inyecta las entradas directamente en el `/etc/hosts` de cada contenedor, garantizando resolución en 0 ms sin depender del DNS embebido ni verse afectado por `systemd-resolved`.
+4. **Automatización en Pipeline CI/CD**:
+   - Se actualizó `.github/workflows/deploy.yml` para garantizar que todos los despliegues automáticos inicien los contenedores con estas directivas de red estáticas.
+
+### Resultado
+El error 502 quedó eliminado por completo. Tanto la interfaz web en `https://icalidad.eliconacento.com/login` como los endpoints del backend en `/api/` responden de manera inmediata y estable.
+
+---
+
 ## Plan de Atención General (Roadmap de Migración)
 
 Para llevar el proyecto a un nivel profesional, robusto y escalable, seguiremos este plan estructurado paso a paso:

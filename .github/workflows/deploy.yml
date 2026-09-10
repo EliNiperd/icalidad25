@@ -55,8 +55,8 @@ jobs:
             BACKEND_IMAGE=ghcr.io/$OWNER/icalidad-backend:latest
             NGINX_IMAGE=ghcr.io/$OWNER/icalidad-nginx:latest
 
-            # Crear red privada si no existe
-            docker network create icalidad-net || true
+            # Crear red privada con subred definida si no existe
+            docker network create --subnet=172.23.0.0/16 icalidad-net || true
 
             # Detener contenedores anteriores
             docker stop icalidad-nginx icalidad-frontend icalidad-backend icalidad || true
@@ -67,10 +67,11 @@ jobs:
             docker pull $FRONTEND_IMAGE
             docker pull $NGINX_IMAGE
 
-            # 1. Iniciar Backend .NET (sin puertos públicos, solo red interna)
+            # 1. Iniciar Backend .NET (sin puertos públicos, IP fija interna)
             docker run -d \
               --name icalidad-backend \
               --network icalidad-net \
+              --ip 172.23.0.2 \
               --restart unless-stopped \
               -e ASPNETCORE_ENVIRONMENT=Production \
               -e DB_PROVIDER=SqlServer \
@@ -80,10 +81,12 @@ jobs:
               -e JWT_AUDIENCE="iCalidadClients" \
               $BACKEND_IMAGE
 
-            # 2. Iniciar Frontend Next.js (sin puertos públicos, solo red interna)
+            # 2. Iniciar Frontend Next.js (sin puertos públicos, IP fija y mapping a backend)
             docker run -d \
               --name icalidad-frontend \
               --network icalidad-net \
+              --ip 172.23.0.3 \
+              --add-host icalidad-backend:172.23.0.2 \
               --restart unless-stopped \
               -e BACKEND_API_URL="http://icalidad-backend:5175/api" \
               -e NEXT_PUBLIC_API_URL="/api" \
@@ -93,10 +96,13 @@ jobs:
               -e SECRET="${{ secrets.SECRET }}" \
               $FRONTEND_IMAGE
 
-            # 3. Iniciar Nginx Reverse Proxy (escucha en el puerto 8084 del VPS)
+            # 3. Iniciar Nginx Reverse Proxy (escucha en el puerto 8084 con mapping directo)
             docker run -d \
               --name icalidad-nginx \
               --network icalidad-net \
+              --ip 172.23.0.4 \
+              --add-host icalidad-frontend:172.23.0.3 \
+              --add-host icalidad-backend:172.23.0.2 \
               --restart unless-stopped \
               -p 8084:80 \
               $NGINX_IMAGE
