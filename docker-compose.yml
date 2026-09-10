@@ -1,37 +1,56 @@
-version: "3.8"
-
 services:
-  sqlserver:
-    image: mcr.microsoft.com/mssql/server:2022-latest
-    container_name: icalidad-sqlserver
-    hostname: icalidad-sqlserver
-    restart: unless-stopped
+  # Backend .NET 9 WebAPI
+  backend:
+    container_name: icalidad-backend
+    build:
+      context: ./backend
+      dockerfile: dockerfile
     environment:
-      ACCEPT_EULA: "Y"
-      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:?MSSQL_SA_PASSWORD is required}
-      MSSQL_PID: "Express"
-    ports:
-      - "1433:1433"
-    volumes:
-      - sqlserver-data:/var/opt/mssql
+      - ASPNETCORE_ENVIRONMENT=Production
+      - DB_PROVIDER=SqlServer
+      - ConnectionStrings__DefaultConnection=Server=${DB_HOST:-31.170.165.68},${DB_PORT:-1435};Database=${DB_NAME:-iCalidad};User Id=${DB_USER:-sa};Password=${DB_PASS};TrustServerCertificate=True;Encrypt=True;
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_ISSUER=${JWT_ISSUER:-iCalidadAPI}
+      - JWT_AUDIENCE=${JWT_AUDIENCE:-iCalidadClients}
+    restart: unless-stopped
     networks:
-      - icalidad-network
-    healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$MSSQL_SA_PASSWORD\" -C -Q \"SELECT 1\" || exit 1",
-        ]
-      interval: 10s
-      timeout: 5s
-      retries: 12
-      start_period: 60s
+      - icalidad-net
 
-volumes:
-  sqlserver-data:
-    name: icalidad-sqlserver-data
+  # Frontend Next.js
+  frontend:
+    container_name: icalidad-frontend
+    build:
+      context: ./frontend
+      dockerfile: dockerfile
+    environment:
+      # Comunicación interna directa en la red Docker a máxima velocidad
+      - BACKEND_API_URL=http://icalidad-backend:5175/api
+      - NEXT_PUBLIC_API_URL=/api
+      - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3000}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+      - JWT_SECRET=${JWT_SECRET}
+      - SECRET=${SECRET}
+    restart: unless-stopped
+    depends_on:
+      - backend
+    networks:
+      - icalidad-net
+
+  # Proxy Inverso Nginx
+  nginx:
+    container_name: icalidad-nginx
+    image: nginx:alpine
+    ports:
+      - "8084:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    restart: unless-stopped
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - icalidad-net
 
 networks:
-  icalidad-network:
-    name: icalidad-network
+  icalidad-net:
     driver: bridge

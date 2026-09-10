@@ -1,0 +1,29 @@
+# Stage 1: Compilación
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+WORKDIR /src
+
+# Copiar archivos de proyectos para restaurar dependencias
+COPY ["iCalidad.Domain/iCalidad.Domain.csproj", "iCalidad.Domain/"]
+COPY ["iCalidad.Application/iCalidad.Application.csproj", "iCalidad.Application/"]
+COPY ["iCalidad.Infrastructure/iCalidad.Infrastructure.csproj", "iCalidad.Infrastructure/"]
+COPY ["iCalidad.WebAPI/iCalidad.WebAPI.csproj", "iCalidad.WebAPI/"]
+COPY ["iCalidad.sln", "./"]
+
+RUN dotnet restore "iCalidad.sln"
+
+# Copiar todo el código fuente del backend y compilar
+COPY . .
+WORKDIR "/src/iCalidad.WebAPI"
+RUN dotnet publish "iCalidad.WebAPI.csproj" -c Release -o /app/publish /p:UseAppHost=false
+
+# Stage 2: Runtime final de ejecución
+FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final
+WORKDIR /app
+
+# Puerto interno en el que escuchará el backend .NET
+ENV ASPNETCORE_URLS=http://+:5175
+EXPOSE 5175
+
+COPY --from=build /app/publish .
+
+ENTRYPOINT ["dotnet", "iCalidad.WebAPI.dll"]

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 import { authenticate } from '@/app/login/action';
 import { ArrowRightIcon } from '@heroicons/react/24/solid';
 import { Button } from '@/components/ui/button';
@@ -18,6 +19,7 @@ import { Label } from '@/components/ui/label';
 export default function LoginForm() {
   const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
   const [isPending, startTransition] = useTransition();
+  const router = useRouter();
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -27,9 +29,15 @@ export default function LoginForm() {
 
     startTransition(async () => {
       try {
-        await authenticate(undefined, formData);
+        const result = await authenticate(undefined, formData);
+        if (!result.success) {
+          setErrorMessage(result.error || 'Error al iniciar sesión.');
+        } else {
+          router.push('/icalidad/dashboard');
+          router.refresh();
+        }
       } catch (error: any) {
-        setErrorMessage(error.message);
+        setErrorMessage(error?.message || 'Error inesperado al iniciar sesión.');
       }
     });
   };
