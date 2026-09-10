@@ -127,5 +127,23 @@ Para llevar el proyecto a un nivel profesional, robusto y escalable, seguiremos 
         1. Instalar el proveedor de EF Core correspondiente (ej. `Pomelo.EntityFrameworkCore.MySql` para MySQL, u `Oracle.EntityFrameworkCore` para Oracle).
         2. Configurar la inyección de dependencias en `iCalidad.WebAPI` para seleccionar el proveedor adecuado basándose en una variable de entorno (`DB_PROVIDER`) y la cadena de conexión correspondiente.
 
-### Fase 4: Primera API - Módulo de Seguridad y Autenticación
-*   **Objetivo:** Diseñar y codificar la primera API funcional enfocada en la autenticación, autorización y seguridad de usuarios, la cual servirá como plantilla de diseño para la posterior migración de los catálogos restantes (Gerencias, Departamentos, Puestos, Empleados, Requisitos).
+### Fase 4: Primera API - Módulo de Seguridad y Autenticación (Completada ✅)
+*   **Objetivo:** Diseñar y codificar la primera API funcional enfocada en la autenticación, autorización y seguridad de usuarios, la cual sirve como plantilla de diseño para la posterior migración de los catálogos restantes.
+*   **Resultado:**
+    *   Backend .NET 9 con arquitectura limpia (`Domain`, `Application`, `Infrastructure`, `WebAPI`).
+    *   Generación y validación de tokens JWT con claims de usuario y roles.
+    *   NextAuth en Next.js migrado para consumir `POST /api/auth/login` directamente.
+    *   Despliegue en producción en VPS mediante contenedores Docker en red privada `icalidad-net`.
+
+---
+
+### Fase 5: Migración Progresiva de Catálogos (Sustitución de Stored Procedures por EF Core y REST APIs)
+*   **Objetivo:** Eliminar la dependencia de llamadas directas a SQL Server (`mssql` / Stored Procedures) en el Frontend, creando para cada catálogo su entidad en `Domain`, mapeo en `Infrastructure`, servicio/casos de uso en `Application`, controlador REST en `WebAPI` (protegido con `[Authorize]`) y conectando las Server Actions del Frontend a través del cliente `apiFetch`.
+
+*   **Orden de Ejecución por Dependencia:**
+    1.  **Módulo 1: Gerencias (`/icalidad/gerencia`)** — Catálogo raíz independiente (CRUD completo: Listar con paginación/filtros, Crear, Actualizar, Eliminar).
+    2.  **Módulo 2: Departamentos (`/icalidad/departamento`)** — Relación con Gerencias (`IdGerencia`).
+    3.  **Módulo 3: Puestos (`/icalidad/puesto`)** — Relación con Departamentos (`IdDepartamento`).
+    4.  **Módulo 4: Empleados (`/icalidad/empleado`)** — Relación con Puestos y asignación de Roles.
+    5.  **Módulo 5: Normativas y Requisitos (`/icalidad/normativa`, `/icalidad/requisito`)** — Gestión de normas de calidad y requisitos asociados.
+    6.  **Módulo 6: Procesos y Sub-Procesos (`/icalidad/proceso`)** — Gestión de procesos con estructura maestro-detalle.
