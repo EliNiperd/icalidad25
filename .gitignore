@@ -15,8 +15,9 @@
 /coverage
 
 # next.js
-/.next/
-/out/
+.next/
+out/
+/frontend/.next/
 
 # production
 /build
@@ -61,3 +62,5 @@ next-env.d.ts
 *.userosscache
 *.sln.docstates
 .vs/
+appsettings.Development.json
+appsettings.Local.json

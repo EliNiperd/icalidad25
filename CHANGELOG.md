@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial C# / .NET 9 backend solution (`iCalidad.sln`) with Clean Architecture project structure: `Domain`, `Application`, `Infrastructure`, and `WebAPI`.
 - Integration of Entity Framework Core in the `iCalidad.Infrastructure` project, including configurations for intermediate tables and Fluent API mapping.
 - Implementation of the first API module: Security and Authentication utilizing JWT Bearer Token generation, claims-based authorization, and custom user response validation.
+- Migration of Frontend NextAuth authentication to consume the .NET Web API (`/api/auth/login`) instead of direct database Stored Procedures.
+- Creation of centralized API client (`frontend/lib/api-client.ts`) with automatic JWT Bearer token injection for all backend requests.
 - Setup of a database query CLI utility (`scripts/db-query.js`) to execute queries against the SQL Server instance from the local Windows environment.
 - Configured SSH passwordless access key setup from Windows 11 laptop to VPS for `icalidad-user`.
 - Setup and deployment of Microsoft SQL Server 2022 Developer edition container on the VPS via Docker Compose.
