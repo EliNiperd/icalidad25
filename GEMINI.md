@@ -156,6 +156,30 @@ El error 502 quedó eliminado por completo. Tanto la interfaz web en `https://ic
 
 ---
 
+## 11. Migración del Catálogo de Gerencias a .NET WebAPI & EF Core (Fase 5 - Módulo 1)
+
+### Problema Original
+El catálogo de Gerencias (`/icalidad/gerencia`) dependía de conexiones directas a SQL Server desde el frontend de Next.js mediante el paquete `mssql` y la ejecución de Stored Procedures (`PF_Gen_TGerencia`, `PFK_Gen_TGerencia`, `PI_Gen_TGerencia`, `PU_Gen_TGerencia`, `PD_Gen_TGerencia`). Esto violaba los principios de arquitectura limpia y acoplaba la UI a la base de datos física.
+
+### Acciones Realizadas
+1. **Clean Architecture en Backend (.NET 9)**:
+   - **Domain**: Creación de las entidades `Gerencia` y `Departamento` con propiedades de auditoría (`FechaAlta`, `IdEmpleadoAlta`, `FechaActualiza`, `IdEmpleadoActualiza`).
+   - **Infrastructure**: Mapeo Fluent API en `GerenciaConfiguration` hacia `Gen_TGerencia` y `DepartamentoConfiguration` hacia `Gen_TDepartamento`, registrando `DbSet<Gerencia>` y `DbSet<Departamento>` en `ApplicationDbContext`.
+   - **Application**: 
+     - DTOs tipados (`GerenciaDto`, `GerenciaSimpleDto`, `CreateGerenciaRequest`, `UpdateGerenciaRequest`, `GerenciaResultDto`, `PagedResult<T>`).
+     - Contrato `IGerenciaService` e implementación `GerenciaService` que resuelve búsqueda parametrizada, ordenamiento dinámico, paginación, validación de clave única y verificación de dependencias relacionales (`NoBorrar` si existen departamentos vinculados).
+   - **WebAPI**: Controlador REST `GerenciasController` (`/api/gerencias`) protegido con `[Authorize]`, que obtiene de forma segura el identificador de usuario de los claims JWT para auditoría en altas y modificaciones.
+2. **Frontend & Principios SOLID**:
+   - Refactorización de `frontend/lib/data/gerencias.ts` para eliminar llamadas a `mssql` y consumir la API REST mediante `apiFetch` propagando el token JWT Bearer.
+   - Revisión y alineación con los principios SOLID en los componentes:
+     - **SRP (Single Responsibility)**: Separación clara entre enrutamiento (`page.tsx`), obtención de datos (`gerencias-table.tsx`), configuración de columnas/presentación (`gerencia-table-wrapper.tsx`), acciones de fila (`gerencia-actions.tsx`) y formulario (`create-edit-form.tsx`).
+     - **OCP & DIP**: Inversión de dependencias mediante servicios e interfaces, componentes desacoplados de la persistencia directa.
+
+### Resultado
+El módulo de Gerencias quedó 100% migrado a .NET 9 WebAPI y Entity Framework Core, eliminando la dependencia de Stored Procedures y asegurando compatibilidad con arquitecturas multi-proveedor de base de datos.
+
+---
+
 ## Plan de Atención General (Roadmap de Migración)
 
 Para llevar el proyecto a un nivel profesional, robusto y escalable, seguiremos este plan estructurado paso a paso:
@@ -194,7 +218,7 @@ Para llevar el proyecto a un nivel profesional, robusto y escalable, seguiremos 
 *   **Objetivo:** Eliminar la dependencia de llamadas directas a SQL Server (`mssql` / Stored Procedures) en el Frontend, creando para cada catálogo su entidad en `Domain`, mapeo en `Infrastructure`, servicio/casos de uso en `Application`, controlador REST en `WebAPI` (protegido con `[Authorize]`) y conectando las Server Actions del Frontend a través del cliente `apiFetch`.
 
 *   **Orden de Ejecución por Dependencia:**
-    1.  **Módulo 1: Gerencias (`/icalidad/gerencia`)** — Catálogo raíz independiente (CRUD completo: Listar con paginación/filtros, Crear, Actualizar, Eliminar).
+    1.  **Módulo 1: Gerencias (`/icalidad/gerencia`)** — Catálogo raíz independiente (CRUD completo: Listar con paginación/filtros, Crear, Actualizar, Eliminar) **(Completado ✅)**.
     2.  **Módulo 2: Departamentos (`/icalidad/departamento`)** — Relación con Gerencias (`IdGerencia`).
     3.  **Módulo 3: Puestos (`/icalidad/puesto`)** — Relación con Departamentos (`IdDepartamento`).
     4.  **Módulo 4: Empleados (`/icalidad/empleado`)** — Relación con Puestos y asignación de Roles.
