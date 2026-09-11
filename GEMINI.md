@@ -156,7 +156,7 @@ El error 502 quedó eliminado por completo. Tanto la interfaz web en `https://ic
 
 ---
 
-## 11. Migración del Catálogo de Gerencias a .NET WebAPI & EF Core (Fase 5 - Módulo 1)
+## 12. Migración del Catálogo de Gerencias a .NET WebAPI & EF Core (Fase 5 - Módulo 1)
 
 ### Problema Original
 El catálogo de Gerencias (`/icalidad/gerencia`) dependía de conexiones directas a SQL Server desde el frontend de Next.js mediante el paquete `mssql` y la ejecución de Stored Procedures (`PF_Gen_TGerencia`, `PFK_Gen_TGerencia`, `PI_Gen_TGerencia`, `PU_Gen_TGerencia`, `PD_Gen_TGerencia`). Esto violaba los principios de arquitectura limpia y acoplaba la UI a la base de datos física.
@@ -177,6 +177,34 @@ El catálogo de Gerencias (`/icalidad/gerencia`) dependía de conexiones directa
 
 ### Resultado
 El módulo de Gerencias quedó 100% migrado a .NET 9 WebAPI y Entity Framework Core, eliminando la dependencia de Stored Procedures y asegurando compatibilidad con arquitecturas multi-proveedor de base de datos.
+## 11. Requisitos Técnicos de Base de Datos y Compatibilidad para Instalaciones Multi-Cliente
+
+### Problema / Hallazgo Técnico
+Al restaurar respaldos de base de datos legados (`.bak`) generados en versiones antiguas de SQL Server (ej. SQL Server 2008 / nivel 100), Entity Framework Core 8/9 genera un error de sintaxis al ejecutar consultas LINQ con `.Contains(...)`:
+```text
+Microsoft.Data.SqlClient.SqlException: Incorrect syntax near '$'.
+```
+
+### Causa Raíz
+EF Core 8 y 9 traducen las cláusulas `collection.Contains(x.Field)` a instrucciones optimizadas `OPENJSON(...) WITH ([value] int '$')`. Esta sintaxis requiere que el nivel de compatibilidad de la base de datos de SQL Server sea **igual o superior a 130 (SQL Server 2016)**; de lo contrario, el parser de T-SQL desconoce el operador `$` en `OPENJSON` y rechaza la consulta.
+
+### Guía de Instalación y Configuración para Nuevos Clientes
+1. **Verificar el Nivel de Compatibilidad Actual:**
+   ```sql
+   SELECT name, compatibility_level FROM sys.databases WHERE name = 'iCalidad';
+   ```
+2. **Homologar al Nivel de Compatibilidad Recomendado (160 para SQL Server 2022 o mínimo 130):**
+   ```sql
+   ALTER DATABASE [iCalidad] SET COMPATIBILITY_LEVEL = 160;
+   ```
+3. **Configuración de la Cadena de Conexión (`ConnectionStrings__DefaultConnection`):**
+   - Para entornos Dockerizados y servidores con certificados autofirmados, es mandatorio incluir:
+     ```ini
+     TrustServerCertificate=True;Encrypt=True;
+     ```
+   - Sin `TrustServerCertificate=True`, `Microsoft.Data.SqlClient` rechazará la conexión con el error: `The remote certificate was rejected by the provided RemoteCertificateValidationCallback`.
+4. **Herramienta CLI de Verificación Rápida:**
+   - La utilidad `node scripts/db-query.js` en el directorio `/frontend` permite ejecutar consultas y scripts DDL directos contra la instancia de base de datos para diagnosticar y validar rápidamente el entorno antes de iniciar la aplicación.
 
 ---
 
