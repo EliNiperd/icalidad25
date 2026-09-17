@@ -11,18 +11,26 @@ export interface GerenciaListItem {
 }
 
 interface PagedGerenciasResponse {
-  items: Gerencia[];
-  totalRecords: number;
-  totalPages: number;
-  pageNumber: number;
-  pageSize: number;
+  Items?: Gerencia[];
+  items?: Gerencia[];
+  TotalRecords?: number;
+  totalRecords?: number;
+  TotalPages?: number;
+  totalPages?: number;
+  PageNumber?: number;
+  pageNumber?: number;
+  PageSize?: number;
+  pageSize?: number;
 }
 
 // Función para obtener una lista simple de gerencias activas (dropdowns)
 export async function getGerenciasList(): Promise<GerenciaListItem[]> {
   try {
-    const data = await apiFetch<GerenciaListItem[]>("/gerencias/list");
-    return data || [];
+    const data = await apiFetch<any[]>("/gerencias/list");
+    return (data || []).map((item) => ({
+      IdGerencia: item.IdGerencia ?? item.idGerencia,
+      NombreGerencia: item.NombreGerencia ?? item.nombreGerencia,
+    }));
   } catch (error) {
     console.error("Failed to fetch gerencias list:", error);
     return [];
@@ -48,9 +56,9 @@ export async function getGerencias(
 
     const data = await apiFetch<PagedGerenciasResponse>(`/gerencias?${params.toString()}`);
     return {
-      gerencias: data?.items || [],
-      totalPages: data?.totalPages || 0,
-      totalRecords: data?.totalRecords || 0
+      gerencias: data?.Items || data?.items || [],
+      totalPages: data?.TotalPages ?? data?.totalPages ?? 0,
+      totalRecords: data?.TotalRecords ?? data?.totalRecords ?? 0
     };
   } catch (error) {
     console.error("Failed to fetch gerencias:", error);
@@ -61,13 +69,13 @@ export async function getGerencias(
 // Función para obtener una gerencia por su ID
 export async function getGerenciaById(id: number): Promise<GerenciaFormData | null> {
   try {
-    const data = await apiFetch<Gerencia>(`/gerencias/${id}`);
+    const data = await apiFetch<any>(`/gerencias/${id}`);
     if (data) {
       return {
-        IdGerencia: data.IdGerencia,
-        ClaveGerencia: data.ClaveGerencia,
-        NombreGerencia: data.NombreGerencia,
-        IdEstatusGerencia: data.IdEstatusGerencia,
+        IdGerencia: data.IdGerencia ?? data.idGerencia,
+        ClaveGerencia: data.ClaveGerencia ?? data.claveGerencia,
+        NombreGerencia: data.NombreGerencia ?? data.nombreGerencia,
+        IdEstatusGerencia: data.IdEstatusGerencia ?? data.idEstatusGerencia,
       };
     }
     return null;
@@ -80,16 +88,19 @@ export async function getGerenciaById(id: number): Promise<GerenciaFormData | nu
 // Función para crear una nueva gerencia
 export async function createGerencia(data: GerenciaFormData): Promise<GerenciaSPResult> {
   try {
-    const result = await apiFetch<GerenciaSPResult>("/gerencias", {
+    const result = await apiFetch<any>("/gerencias", {
       method: "POST",
       body: JSON.stringify({
-        claveGerencia: data.ClaveGerencia,
-        nombreGerencia: data.NombreGerencia
+        ClaveGerencia: data.ClaveGerencia,
+        NombreGerencia: data.NombreGerencia
       })
     });
 
     revalidatePath("/icalidad/gerencia");
-    return result;
+    return {
+      Resultado: result?.Resultado ?? result?.resultado ?? 1,
+      Mensaje: result?.Mensaje ?? result?.mensaje ?? "Creación exitosa"
+    };
   } catch (error: any) {
     console.error("Failed to create gerencia:", error);
     return { Resultado: -99, Mensaje: error?.message || "Error al crear gerencia." };
@@ -99,18 +110,21 @@ export async function createGerencia(data: GerenciaFormData): Promise<GerenciaSP
 // Función para actualizar una gerencia existente
 export async function updateGerencia(id: number, data: GerenciaFormData): Promise<GerenciaSPResult> {
   try {
-    const result = await apiFetch<GerenciaSPResult>(`/gerencias/${id}`, {
+    const result = await apiFetch<any>(`/gerencias/${id}`, {
       method: "PUT",
       body: JSON.stringify({
-        idGerencia: id,
-        claveGerencia: data.ClaveGerencia,
-        nombreGerencia: data.NombreGerencia,
-        idEstatusGerencia: data.IdEstatusGerencia
+        IdGerencia: id,
+        ClaveGerencia: data.ClaveGerencia,
+        NombreGerencia: data.NombreGerencia,
+        IdEstatusGerencia: data.IdEstatusGerencia
       })
     });
 
     revalidatePath("/icalidad/gerencia");
-    return result;
+    return {
+      Resultado: result?.Resultado ?? result?.resultado ?? 1,
+      Mensaje: result?.Mensaje ?? result?.mensaje ?? "Actualización exitosa"
+    };
   } catch (error: any) {
     console.error(`Failed to update gerencia with ID ${id}:`, error);
     return { Resultado: -99, Mensaje: error?.message || "Error al actualizar gerencia." };
@@ -120,12 +134,15 @@ export async function updateGerencia(id: number, data: GerenciaFormData): Promis
 // Función para eliminar una gerencia
 export async function deleteGerencia(id: number): Promise<GerenciaSPResult> {
   try {
-    const result = await apiFetch<GerenciaSPResult>(`/gerencias/${id}`, {
+    const result = await apiFetch<any>(`/gerencias/${id}`, {
       method: "DELETE"
     });
 
     revalidatePath("/icalidad/gerencia");
-    return result;
+    return {
+      Resultado: result?.Resultado ?? result?.resultado ?? 1,
+      Mensaje: result?.Mensaje ?? result?.mensaje ?? "Eliminación exitosa"
+    };
   } catch (error: any) {
     console.error(`Failed to delete gerencia with ID ${id}:`, error);
     return { Resultado: -99, Mensaje: error?.message || "Error al eliminar gerencia." };

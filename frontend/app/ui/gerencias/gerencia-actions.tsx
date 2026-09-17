@@ -7,18 +7,18 @@ import { deleteGerencia } from "@/lib/data/gerencias"; // Importar la Server Act
 import { useState } from "react";
 import { PencilIcon, Trash2, LoaderPinwheel } from "lucide-react";
 import { toast } from "sonner";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface GerenciaActionsProps {
   idGerencia: number;
+  canDelete?: boolean;
 }
 
-export default function GerenciaActions({ idGerencia }: GerenciaActionsProps) {
+export default function GerenciaActions({ idGerencia, canDelete = true }: GerenciaActionsProps) {
   const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
 
-
   const confirmDelete = () => {
-    
     toast.warning("¿Estas seguro de que quieres eliminar esta gerencia?",{
       position: "top-center",
       duration: Infinity,
@@ -38,7 +38,6 @@ export default function GerenciaActions({ idGerencia }: GerenciaActionsProps) {
       try {
         const result = await deleteGerencia(idGerencia);
         if (result.Resultado < 0) {
-          //alert(`Error al eliminar: ${result.Mensaje}`);
           toast.error(`Error al eliminar: ${result.Mensaje}`, {
             position: "top-center",
           });
@@ -66,21 +65,44 @@ export default function GerenciaActions({ idGerencia }: GerenciaActionsProps) {
           <PencilIcon className="h-5 md:ml-2" />
         </Button>
       </Link>
-      <Button
-        variant="destructive"
-        size="sm"
-        onClick={confirmDelete}
-        disabled={isDeleting}
-      >
-        {isDeleting ? (
-          <LoaderPinwheel className="w-5 animate-spin" />
-        ) : (
-          <>
-            <span className="hidden md:block">Eliminar</span>
-            <Trash2 className="h-5 md:ml-2" />
-          </>
-        )}
-      </Button>
+      {!canDelete ? (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span tabIndex={0} className="inline-block cursor-not-allowed">
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  disabled
+                  className="opacity-50 pointer-events-none"
+                >
+                  <span className="hidden md:block">Eliminar</span>
+                  <Trash2 className="h-5 md:ml-2" />
+                </Button>
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>No se puede eliminar porque tiene departamentos asociados</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      ) : (
+        <Button
+          variant="destructive"
+          size="sm"
+          onClick={confirmDelete}
+          disabled={isDeleting}
+        >
+          {isDeleting ? (
+            <LoaderPinwheel className="w-5 animate-spin" />
+          ) : (
+            <>
+              <span className="hidden md:block">Eliminar</span>
+              <Trash2 className="h-5 md:ml-2" />
+            </>
+          )}
+        </Button>
+      )}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using iCalidad.Application.Common.Interfaces;
@@ -21,7 +21,9 @@ namespace iCalidad.WebAPI.Controllers
         private int GetCurrentUserId()
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value 
-                ?? User.FindFirst("sub")?.Value;
+                ?? User.FindFirst("sub")?.Value
+                ?? User.FindFirst("id")?.Value
+                ?? User.FindFirst("IdEmpleado")?.Value;
 
             return int.TryParse(userIdClaim, out var userId) ? userId : 0;
         }
@@ -51,7 +53,11 @@ namespace iCalidad.WebAPI.Controllers
             var gerencia = await _gerenciaService.GetByIdAsync(id);
             if (gerencia == null)
             {
-                return NotFound(new { Message = $"No se encontró la gerencia con ID {id}." });
+                return NotFound(new GerenciaResultDto
+                {
+                    Resultado = -1,
+                    Mensaje = $"No se encontró la gerencia con ID {id}."
+                });
             }
             return Ok(gerencia);
         }
@@ -60,6 +66,15 @@ namespace iCalidad.WebAPI.Controllers
         public async Task<IActionResult> Create([FromBody] CreateGerenciaRequest request)
         {
             var userId = GetCurrentUserId();
+            if (userId <= 0)
+            {
+                return Unauthorized(new GerenciaResultDto
+                {
+                    Resultado = -1,
+                    Mensaje = "No se pudo identificar al usuario autenticado para la auditoría."
+                });
+            }
+
             var result = await _gerenciaService.CreateAsync(request, userId);
 
             if (result.Resultado < 0)
@@ -74,6 +89,15 @@ namespace iCalidad.WebAPI.Controllers
         public async Task<IActionResult> Update(int id, [FromBody] UpdateGerenciaRequest request)
         {
             var userId = GetCurrentUserId();
+            if (userId <= 0)
+            {
+                return Unauthorized(new GerenciaResultDto
+                {
+                    Resultado = -1,
+                    Mensaje = "No se pudo identificar al usuario autenticado para la auditoría."
+                });
+            }
+
             var result = await _gerenciaService.UpdateAsync(id, request, userId);
 
             if (result.Resultado < 0)
@@ -88,6 +112,15 @@ namespace iCalidad.WebAPI.Controllers
         public async Task<IActionResult> Delete(int id)
         {
             var userId = GetCurrentUserId();
+            if (userId <= 0)
+            {
+                return Unauthorized(new GerenciaResultDto
+                {
+                    Resultado = -1,
+                    Mensaje = "No se pudo identificar al usuario autenticado para la auditoría."
+                });
+            }
+
             var result = await _gerenciaService.DeleteAsync(id, userId);
 
             if (result.Resultado < 0)
