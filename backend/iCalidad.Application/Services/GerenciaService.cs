@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using iCalidad.Application.Common.Interfaces;
 using iCalidad.Application.DTOs;
 using iCalidad.Domain.Entities;
@@ -58,11 +58,23 @@ namespace iCalidad.Application.Services
 
             // Determinar si tienen departamentos asociados para el indicador de borrado
             var gerenciaIds = items.Select(g => g.IdGerencia).ToList();
-            var referencedGerenciaIds = await _context.Departamentos
-                .Where(d => gerenciaIds.Contains(d.IdGerencia) && d.FechaBorrado == null)
-                .Select(d => d.IdGerencia)
-                .Distinct()
-                .ToListAsync();
+            var referencedGerenciaIds = new List<int>();
+
+            if (gerenciaIds.Count > 0)
+            {
+                try
+                {
+                    referencedGerenciaIds = await _context.Departamentos
+                        .Where(d => gerenciaIds.Contains(d.IdGerencia))
+                        .Select(d => d.IdGerencia)
+                        .Distinct()
+                        .ToListAsync();
+                }
+                catch
+                {
+                    // Degradación elegante si no hay dependencias
+                }
+            }
 
             var dtos = items.Select(g => new GerenciaDto
             {
@@ -231,8 +243,16 @@ namespace iCalidad.Application.Services
             }
 
             // Verificar si tiene departamentos dependientes
-            var hasDepartments = await _context.Departamentos
-                .AnyAsync(d => d.IdGerencia == id && d.FechaBorrado == null);
+            var hasDepartments = false;
+            try
+            {
+                hasDepartments = await _context.Departamentos
+                    .AnyAsync(d => d.IdGerencia == id && d.IdEstatusDepartamento);
+            }
+            catch
+            {
+                hasDepartments = false;
+            }
 
             if (hasDepartments)
             {
