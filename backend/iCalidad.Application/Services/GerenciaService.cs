@@ -32,8 +32,8 @@ namespace iCalidad.Application.Services
                 var searchIsInactivo = "INACTIVO".Contains(search);
 
                 query = query.Where(g =>
-                    g.ClaveGerencia.ToUpper().Contains(search) ||
-                    g.NombreGerencia.ToUpper().Contains(search) ||
+                    (g.ClaveGerencia != null && g.ClaveGerencia.ToUpper().Contains(search)) ||
+                    (g.NombreGerencia != null && g.NombreGerencia.ToUpper().Contains(search)) ||
                     (searchIsActivo && g.IdEstatusGerencia) ||
                     (searchIsInactivo && !g.IdEstatusGerencia));
             }
@@ -79,8 +79,8 @@ namespace iCalidad.Application.Services
             var dtos = items.Select(g => new GerenciaDto
             {
                 IdGerencia = g.IdGerencia,
-                ClaveGerencia = g.ClaveGerencia.Trim(),
-                NombreGerencia = g.NombreGerencia.Trim(),
+                ClaveGerencia = (g.ClaveGerencia ?? string.Empty).Trim(),
+                NombreGerencia = (g.NombreGerencia ?? string.Empty).Trim(),
                 IdEstatusGerencia = g.IdEstatusGerencia,
                 BorrarGerencia = referencedGerenciaIds.Contains(g.IdGerencia) ? "NoBorrar" : string.Empty
             }).ToList();
@@ -105,7 +105,7 @@ namespace iCalidad.Application.Services
                 .Select(g => new GerenciaSimpleDto
                 {
                     IdGerencia = g.IdGerencia,
-                    NombreGerencia = g.NombreGerencia.Trim()
+                    NombreGerencia = (g.NombreGerencia ?? string.Empty).Trim()
                 })
                 .ToListAsync();
         }
@@ -120,8 +120,8 @@ namespace iCalidad.Application.Services
             return new GerenciaDto
             {
                 IdGerencia = gerencia.IdGerencia,
-                ClaveGerencia = gerencia.ClaveGerencia.Trim(),
-                NombreGerencia = gerencia.NombreGerencia.Trim(),
+                ClaveGerencia = (gerencia.ClaveGerencia ?? string.Empty).Trim(),
+                NombreGerencia = (gerencia.NombreGerencia ?? string.Empty).Trim(),
                 IdEstatusGerencia = gerencia.IdEstatusGerencia
             };
         }
@@ -142,8 +142,8 @@ namespace iCalidad.Application.Services
 
             var duplicateExists = await _context.Gerencias
                 .AnyAsync(g => g.IdEstatusGerencia && g.FechaBorrado == null &&
-                    (g.ClaveGerencia.ToUpper() == cleanClave.ToUpper() ||
-                     g.NombreGerencia.ToUpper() == cleanNombre.ToUpper()));
+                    ((g.ClaveGerencia != null && g.ClaveGerencia.ToUpper() == cleanClave.ToUpper()) ||
+                     (g.NombreGerencia != null && g.NombreGerencia.ToUpper() == cleanNombre.ToUpper())));
 
             if (duplicateExists)
             {
@@ -201,8 +201,8 @@ namespace iCalidad.Application.Services
 
             var duplicateExists = await _context.Gerencias
                 .AnyAsync(g => g.IdGerencia != id && g.FechaBorrado == null &&
-                    (g.ClaveGerencia.ToUpper() == cleanClave.ToUpper() ||
-                     g.NombreGerencia.ToUpper() == cleanNombre.ToUpper()));
+                    ((g.ClaveGerencia != null && g.ClaveGerencia.ToUpper() == cleanClave.ToUpper()) ||
+                     (g.NombreGerencia != null && g.NombreGerencia.ToUpper() == cleanNombre.ToUpper())));
 
             if (duplicateExists)
             {
