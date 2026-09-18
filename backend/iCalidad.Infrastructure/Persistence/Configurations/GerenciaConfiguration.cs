@@ -8,7 +8,7 @@ namespace iCalidad.Infrastructure.Persistence.Configurations
     {
         public void Configure(EntityTypeBuilder<Gerencia> builder)
         {
-            builder.ToTable("Gen_TGerencia");
+            builder.ToTable("Gen_TGerencia", tb => tb.UseSqlOutputClause(false));
 
             builder.HasKey(g => g.IdGerencia);
 
