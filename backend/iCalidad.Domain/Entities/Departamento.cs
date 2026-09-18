@@ -1,10 +1,10 @@
-﻿namespace iCalidad.Domain.Entities
+namespace iCalidad.Domain.Entities
 {
     public class Departamento
     {
         public int IdDepartamento { get; set; }
-        public string NombreDepartamento { get; set; } = string.Empty;
-        public string ClaveDepartamento { get; set; } = string.Empty;
+        public string? NombreDepartamento { get; set; }
+        public string? ClaveDepartamento { get; set; }
         public string? ClaveNombreDepartamento { get; set; }
         public int IdGerencia { get; set; }
         public bool IdEstatusDepartamento { get; set; } = true;

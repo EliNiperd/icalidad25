@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using iCalidad.Domain.Entities;
 
@@ -17,17 +17,14 @@ namespace iCalidad.Infrastructure.Persistence.Configurations
 
             builder.Property(g => g.ClaveGerencia)
                 .HasColumnName("ClaveGerencia")
-                .HasMaxLength(40)
-                .IsRequired();
+                .HasMaxLength(40);
 
             builder.Property(g => g.NombreGerencia)
                 .HasColumnName("NombreGerencia")
-                .HasMaxLength(100)
-                .IsRequired();
+                .HasMaxLength(100);
 
             builder.Property(g => g.IdEstatusGerencia)
-                .HasColumnName("IdEstatusGerencia")
-                .IsRequired();
+                .HasColumnName("IdEstatusGerencia");
 
             builder.Property(g => g.FechaAlta)
                 .HasColumnName("FechaAlta");

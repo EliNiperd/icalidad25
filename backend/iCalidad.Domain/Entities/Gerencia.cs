@@ -1,10 +1,10 @@
-﻿namespace iCalidad.Domain.Entities
+namespace iCalidad.Domain.Entities
 {
     public class Gerencia
     {
         public int IdGerencia { get; set; }
-        public string ClaveGerencia { get; set; } = string.Empty;
-        public string NombreGerencia { get; set; } = string.Empty;
+        public string? ClaveGerencia { get; set; }
+        public string? NombreGerencia { get; set; }
         public bool IdEstatusGerencia { get; set; } = true;
 
         // Auditoría
