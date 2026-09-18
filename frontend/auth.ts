@@ -9,15 +9,24 @@ const loginSchema = z.object({
 });
 
 export interface AuthApiResponse {
-  idEmpleado: number;
-  nombreEmpleado: string;
-  userName: string;
-  correo: string | null;
-  imageEmpleado: string | null;
-  idRol: number;
-  nombreRol: string;
-  roles: string[];
-  token: string;
+  idEmpleado?: number;
+  IdEmpleado?: number;
+  nombreEmpleado?: string;
+  NombreEmpleado?: string;
+  userName?: string;
+  UserName?: string;
+  correo?: string | null;
+  Correo?: string | null;
+  imageEmpleado?: string | null;
+  ImageEmpleado?: string | null;
+  idRol?: number;
+  IdRol?: number;
+  nombreRol?: string;
+  NombreRol?: string;
+  roles?: string[];
+  Roles?: string[];
+  token?: string;
+  Token?: string;
 }
 
 export async function loginWithBackendAPI(
@@ -43,8 +52,14 @@ export async function loginWithBackendAPI(
       let errorMessage = "Usuario o contraseña incorrectos, o cuenta inactiva.";
       try {
         const errJson = await res.json();
-        if (errJson?.message) {
-          errorMessage = errJson.message;
+        const extracted = 
+          errJson?.Mensaje || 
+          errJson?.mensaje || 
+          errJson?.Message || 
+          errJson?.message || 
+          errJson?.title;
+        if (extracted) {
+          errorMessage = extracted;
         }
       } catch {
         // En caso de que no sea formato JSON
@@ -88,17 +103,26 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
         }
 
         const user = result.data;
+        const idEmpleado = user.IdEmpleado ?? user.idEmpleado ?? 0;
+        const nombreEmpleado = user.NombreEmpleado ?? user.nombreEmpleado ?? "";
+        const userName = user.UserName ?? user.userName ?? "";
+        const correo = user.Correo ?? user.correo ?? "";
+        const imageEmpleado = user.ImageEmpleado ?? user.imageEmpleado ?? null;
+        const idRol = user.IdRol ?? user.idRol ?? 0;
+        const roles = user.Roles ?? user.roles ?? [];
+        const nombreRol = user.NombreRol ?? user.nombreRol ?? (roles.length > 0 ? roles[0] : "");
+        const token = user.Token ?? user.token ?? "";
 
         return {
-          id: user.idEmpleado.toString(),
-          name: user.nombreEmpleado,
-          email: user.correo ?? "",
-          image: user.imageEmpleado,
-          username: user.userName,
-          roles: user.roles,
-          token: user.token,
-          idRol: user.idRol,
-          nombreRol: user.nombreRol || (user.roles && user.roles.length > 0 ? user.roles[0] : ""),
+          id: idEmpleado.toString(),
+          name: nombreEmpleado,
+          email: correo,
+          image: imageEmpleado,
+          username: userName,
+          roles: roles,
+          token: token,
+          idRol: idRol,
+          nombreRol: nombreRol,
         };
       },
     }),

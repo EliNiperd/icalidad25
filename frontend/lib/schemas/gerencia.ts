@@ -6,7 +6,7 @@ export interface Gerencia {
   NombreGerencia: string;
   IdEstatusGerencia: boolean; // bit en SQL se mapea a boolean
   Estatus: string; // 'Activo' o 'Inactivo'
-  //BorrarGerencia: string; // 'NoBorrar' o '' (para indicar si se puede borrar)
+  BorrarGerencia?: string; // 'NoBorrar' o '' (para indicar si se puede borrar)
 }
 
 export interface GerenciaSPResult {

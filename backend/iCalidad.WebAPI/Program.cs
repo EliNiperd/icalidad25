@@ -54,11 +54,43 @@ builder.Services.AddCors(options =>
     });
 });
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNamingPolicy = null;
+    });
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
+
+// Middleware global para captura y diagnóstico detallado de excepciones
+app.Use(async (context, next) =>
+{
+    try
+    {
+        await next();
+    }
+    catch (Exception ex)
+    {
+        var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "Excepción no controlada en la petición {Path}: {Message}", context.Request.Path, ex.Message);
+
+        context.Response.ContentType = "application/json";
+        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+
+        var response = new
+        {
+            Resultado = -1,
+            Mensaje = "Ocurrió un error interno en el servidor.",
+            Error = ex.Message,
+            InnerError = ex.InnerException?.Message,
+            StackTrace = app.Environment.IsDevelopment() ? ex.StackTrace : null
+        };
+
+        await context.Response.WriteAsJsonAsync(response);
+    }
+});
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

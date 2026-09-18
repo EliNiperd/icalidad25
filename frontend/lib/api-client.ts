@@ -52,8 +52,16 @@ export async function apiFetch<T = any>(
     let errorMessage = `HTTP Error ${response.status}: ${response.statusText}`;
     try {
       const errorData = await response.json();
-      if (errorData?.message) {
-        errorMessage = errorData.message;
+      const extractedMessage = 
+        errorData?.Mensaje || 
+        errorData?.mensaje || 
+        errorData?.Message || 
+        errorData?.message || 
+        errorData?.title || 
+        (typeof errorData === "string" ? errorData : null);
+
+      if (extractedMessage) {
+        errorMessage = extractedMessage;
       }
     } catch {
       // Mantener mensaje por defecto si no hay body JSON

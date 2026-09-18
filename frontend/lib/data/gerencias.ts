@@ -11,11 +11,11 @@ export interface GerenciaListItem {
 }
 
 interface PagedGerenciasResponse {
-  items: Gerencia[];
-  totalRecords: number;
-  totalPages: number;
-  pageNumber: number;
-  pageSize: number;
+  Items: Gerencia[];
+  TotalRecords: number;
+  TotalPages: number;
+  PageNumber: number;
+  PageSize: number;
 }
 
 // Función para obtener una lista simple de gerencias activas (dropdowns)
@@ -48,9 +48,9 @@ export async function getGerencias(
 
     const data = await apiFetch<PagedGerenciasResponse>(`/gerencias?${params.toString()}`);
     return {
-      gerencias: data?.items || [],
-      totalPages: data?.totalPages || 0,
-      totalRecords: data?.totalRecords || 0
+      gerencias: data?.Items || [],
+      totalPages: data?.TotalPages || 0,
+      totalRecords: data?.TotalRecords || 0
     };
   } catch (error) {
     console.error("Failed to fetch gerencias:", error);
@@ -83,8 +83,8 @@ export async function createGerencia(data: GerenciaFormData): Promise<GerenciaSP
     const result = await apiFetch<GerenciaSPResult>("/gerencias", {
       method: "POST",
       body: JSON.stringify({
-        claveGerencia: data.ClaveGerencia,
-        nombreGerencia: data.NombreGerencia
+        ClaveGerencia: data.ClaveGerencia,
+        NombreGerencia: data.NombreGerencia
       })
     });
 
@@ -102,10 +102,10 @@ export async function updateGerencia(id: number, data: GerenciaFormData): Promis
     const result = await apiFetch<GerenciaSPResult>(`/gerencias/${id}`, {
       method: "PUT",
       body: JSON.stringify({
-        idGerencia: id,
-        claveGerencia: data.ClaveGerencia,
-        nombreGerencia: data.NombreGerencia,
-        idEstatusGerencia: data.IdEstatusGerencia
+        IdGerencia: id,
+        ClaveGerencia: data.ClaveGerencia,
+        NombreGerencia: data.NombreGerencia,
+        IdEstatusGerencia: data.IdEstatusGerencia
       })
     });
 

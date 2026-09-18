@@ -48,7 +48,12 @@ export default function GerenciaTableWrapper({
       defaultSortBy={defaultSortBy}
       defaultSortOrder={defaultSortOrder}
       searchPlaceholder={searchPlaceholder}
-      renderActions={(row: Gerencia) => <GerenciaActions idGerencia={row.IdGerencia} />}
+      renderActions={(row: Gerencia) => (
+        <GerenciaActions 
+          idGerencia={row.IdGerencia} 
+          canDelete={row.BorrarGerencia !== 'NoBorrar'} 
+        />
+      )}
       showRowNumber={showRowNumber} // Pasar la prop a DataTable
     />
   );
