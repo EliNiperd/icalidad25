@@ -14,18 +14,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Migration of Módulo 5: Normativas y Requisitos.
 - Migration of Módulo 6: Procesos y Sub-Procesos.
 
-## [1.2.0] - 2026-09-11
+## [1.3.0] - 2026-09-23
 
 ### Added
 - **Fase 5 - Módulo 1: Catálogo de Gerencias (`/icalidad/gerencia`)**:
   - **Clean Architecture (.NET 9 WebAPI & EF Core)**:
-    - Domain: Created `Gerencia` and `Departamento` entities with audit properties.
+    - Domain: Created `Gerencia` and `Departamento` entities with audit and null-safe properties.
     - Infrastructure: Implemented Fluent API mapping in `GerenciaConfiguration` and `DepartamentoConfiguration` to `Gen_TGerencia` and `Gen_TDepartamento`.
     - Application: Created `GerenciaDtos`, `IGerenciaService` interface, and `GerenciaService` implementing search filtering, dynamic ordering, pagination, uniqueness validation, and referential integrity verification (`BorrarGerencia: 'NoBorrar'`).
-    - WebAPI: Developed `GerenciasController` (`GET /api/gerencias`, `GET /api/gerencias/list`, `GET /api/gerencias/{id}`, `POST /api/gerencias`, `PUT /api/gerencias/{id}`, `DELETE /api/gerencias/{id}`) protected by `[Authorize]`.
+    - WebAPI: Developed `GerenciasController` (`GET /api/gerencias`, `GET /api/gerencias/list`, `GET /api/gerencias/{id}`, `POST /api/gerencias`, `PUT /api/gerencias/{id}`, `DELETE /api/gerencias/{id}`) protected by `[Authorize]` with safe audit extraction.
   - **Frontend SOLID Compliance & Decoupling**:
     - Refactored `frontend/lib/data/gerencias.ts` to fully eliminate direct database/Stored Procedure calls (`PF_Gen_TGerencia`, `PFK_Gen_TGerencia`, `PI_Gen_TGerencia`, `PU_Gen_TGerencia`, `PD_Gen_TGerencia`), delegating all operations to `apiFetch` against `/api/gerencias` with automatic JWT Bearer token propagation.
     - Verified Gerencias UI components (`page.tsx`, `gerencias-table.tsx`, `gerencia-table-wrapper.tsx`, `gerencia-actions.tsx`, `create-edit-form.tsx`) for strict adherence to SOLID design principles (SRP, OCP, LSP, ISP, DIP).
+    - Added interactive tooltip on disabled delete action when a gerencia has linked departments (`BorrarGerencia: 'NoBorrar'`).
+
+### Fixed & Security
+- **Security Vulnerability Remediation**:
+  - Upgraded Next.js to **`16.3.5`** alongside React 19 and configured transitive dependency overrides.
+  - Resolved all 27 vulnerabilities reported by `pnpm audit` (audit result: **0 known vulnerabilities**).
+- **Backend JSON Serialization & Error Handling**:
+  - Configured ASP.NET Core JSON serializer to preserve **PascalCase** naming policy (`PropertyNamingPolicy = null`).
+  - Added Global Exception Handling Middleware in WebAPI providing structured JSON diagnostics on unhandled exceptions.
+  - Added `tb.UseSqlOutputClause(false)` in EF Core entity configurations to ensure full compatibility with SQL Server tables containing database triggers.
+  - Added null safety across entity properties and LINQ queries to prevent `Data is Null` exceptions on legacy database records.
 
 ## [1.1.0] - 2026-09-10
 
