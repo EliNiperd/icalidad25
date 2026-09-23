@@ -208,6 +208,29 @@ EF Core 8 y 9 traducen las cláusulas `collection.Contains(x.Field)` a instrucci
 
 ---
 
+## 13. Modernización a Next.js 16, Remediación de Vulnerabilidades y Compatibilidad con Triggers en EF Core
+
+### Problema Original
+1. La auditoría de dependencias (`pnpm audit`) reportaba **27 vulnerabilidades** de seguridad ligadas a versiones desactualizadas de Next.js (`14.2.33`) y paquetes transitivos como `postcss`.
+2. Al ejecutar operaciones de actualización (`PUT`) en tablas con triggers de base de datos (`Gen_TGerencia`), Entity Framework Core generaba una excepción por el uso automático de la cláusula `OUTPUT` en SQL Server.
+3. Se detectaron discrepancias de nomenclatura JSON (camelCase por defecto en ASP.NET Core vs PascalCase esperado por el frontend) e inconsistencias por valores nulos en registros históricos (`Data is Null`).
+
+### Acciones Realizadas
+1. **Actualización del Frontend a Next.js 16**:
+   - Se actualizó `next` a la versión **`16.3.5`** compatible con React 19.
+   - Se configuraron los overrides de dependencias en `pnpm-workspace.yaml`, logrando **0 vulnerabilidades** en `pnpm audit`.
+2. **Compatibilidad con Triggers de SQL Server (`UseSqlOutputClause`)**:
+   - En las configuraciones Fluent API (`GerenciaConfiguration.cs` y `DepartamentoConfiguration.cs`), se añadió `tb => tb.UseSqlOutputClause(false)` para deshabilitar la cláusula `OUTPUT` en sentencias DML, permitiendo que los triggers de base de datos se ejecuten sin errores.
+3. **Resiliencia ante Datos Nulos y Serialización Unificada**:
+   - Se configuró `PropertyNamingPolicy = null` en `Program.cs` para mantener la nomenclatura **PascalCase** en toda la WebAPI.
+   - Se tiparon las propiedades de entidades como nulables (`string?`) y se protegieron las consultas LINQ y formateadores `.Trim()` para procesar registros legados con campos nulos de forma transparente.
+   - Se implementó un **Middleware Global de Diagnóstico de Excepciones** en `Program.cs` para emitir respuestas JSON estructuradas ante cualquier error no controlado.
+
+### Resultado
+El sistema queda completamente modernizado a Next.js 16, libre de vulnerabilidades de seguridad conocidas, y con un backend robusto capaz de operar fluidamente con tablas con triggers y datos heterogéneos.
+
+---
+
 ## Plan de Atención General (Roadmap de Migración)
 
 Para llevar el proyecto a un nivel profesional, robusto y escalable, seguiremos este plan estructurado paso a paso:
