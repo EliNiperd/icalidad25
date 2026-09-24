@@ -270,8 +270,38 @@ Para llevar el proyecto a un nivel profesional, robusto y escalable, seguiremos 
 
 *   **Orden de Ejecución por Dependencia:**
     1.  **Módulo 1: Gerencias (`/icalidad/gerencia`)** — Catálogo raíz independiente (CRUD completo: Listar con paginación/filtros, Crear, Actualizar, Eliminar) **(Completado ✅)**.
-    2.  **Módulo 2: Departamentos (`/icalidad/departamento`)** — Relación con Gerencias (`IdGerencia`).
+    2.  **Módulo 2: Departamentos (`/icalidad/departamento`)** — Relación con Gerencias (`IdGerencia`) **(Completado ✅)**.
     3.  **Módulo 3: Puestos (`/icalidad/puesto`)** — Relación con Departamentos (`IdDepartamento`).
     4.  **Módulo 4: Empleados (`/icalidad/empleado`)** — Relación con Puestos y asignación de Roles.
     5.  **Módulo 5: Normativas y Requisitos (`/icalidad/normativa`, `/icalidad/requisito`)** — Gestión de normas de calidad y requisitos asociados.
     6.  **Módulo 6: Procesos y Sub-Procesos (`/icalidad/proceso`)** — Gestión de procesos con estructura maestro-detalle.
+
+---
+
+## 14. Migración del Catálogo de Departamentos y Suite de Pruebas Unitarias Automatizadas (Fase 5 - Módulo 2)
+
+### Problema Original
+1. El catálogo de Departamentos (`/icalidad/departamento`) dependía de conexiones directas a SQL Server desde el frontend con `mssql` y Stored Procedures (`PF_Gen_TDepartamento`, `PFK_Gen_TDepartamento`, `PI_Gen_TDepartamento`, `PU_Gen_TDepartamento`, `PD_Gen_TDepartamento`).
+2. Se requería establecer una suite formal de pruebas unitarias automatizadas para prevenir regresiones en **Autenticación (Auth)**, **Menú Dinámico**, **Gerencias** y **Departamentos**.
+
+### Acciones Realizadas
+1. **Backend (.NET 9 & Clean Architecture)**:
+   - **Application**:
+     - DTOs en `DepartamentoDtos.cs` (`DepartamentoDto`, `DepartamentoSimpleDto`, `CreateDepartamentoRequest`, `UpdateDepartamentoRequest`, `DepartamentoResultDto`).
+     - Interfaz `IDepartamentoService` y servicio `DepartamentoService` con validaciones de clave única, existencia de gerencia padre activa, paginación, filtros de búsqueda y ordenamiento dinámico.
+     - Registro de dependencias en `DependencyInjection.cs`.
+   - **Infrastructure**:
+     - Mapeo de `FechaBorrado` e `IdEmpleadoBorrado` en `DepartamentoConfiguration.cs`.
+   - **WebAPI**:
+     - Controlador `DepartamentosController.cs` (`/api/departamentos`) protegido con `[Authorize]` y extracción de claims JWT para auditoría (`IdEmpleadoAlta`, `IdEmpleadoActualiza`).
+2. **Suite de Pruebas Unitarias (`iCalidad.UnitTests`)**:
+   - Proyecto xUnit integrado en la solución (`iCalidad.sln`) con `Moq` y `Microsoft.EntityFrameworkCore.InMemory`.
+   - `AuthenticationServiceTests`: validación de credenciales correctas, contraseñas erróneas, usuarios inactivos y no encontrados.
+   - `MenuServiceTests`: usuarios sin roles, filtrado de estatus activo y deduplicación por roles.
+   - `GerenciaServiceTests`: creación exitosa, prevención de claves duplicadas, bloqueo de borrado con departamentos dependientes y eliminación física.
+   - `DepartamentoServiceTests`: creación exitosa con auditoría, validación de gerencia padre existente, prevención de claves duplicadas, actualización y eliminación.
+   - **Resultado:** 16/16 pruebas unitarias exitosas (100% passed).
+3. **Frontend (Next.js 16)**:
+   - Refactorización de `frontend/lib/data/departamentos.ts` hacia `apiFetch` (`/api/departamentos`), eliminando `mssql` y llamadas a SPs.
+   - Actualización del esquema `Departamento` en `frontend/lib/schemas/departamento.ts` para soportar `NombreGerencia` en tablas.
+   - Verificación de compilación de frontend con `pnpm build` sin errores.

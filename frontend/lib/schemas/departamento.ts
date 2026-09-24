@@ -5,6 +5,7 @@ export interface Departamento {
     ClaveDepartamento: string;
     NombreDepartamento: string;
     IdGerencia: number;
+    NombreGerencia?: string;
     IdEstatusDepartamento: boolean;
 }
 
