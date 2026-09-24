@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "iCalidad.Infrastructure", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "iCalidad.WebAPI", "iCalidad.WebAPI\iCalidad.WebAPI.csproj", "{3BC35602-12F3-41AA-8444-CD9E19D6AC48}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "iCalidad.UnitTests", "iCalidad.UnitTests\iCalidad.UnitTests.csproj", "{29E5DCD7-DAAD-478C-9909-EDC19989CD81}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -69,6 +71,18 @@ Global
 		{3BC35602-12F3-41AA-8444-CD9E19D6AC48}.Release|x64.Build.0 = Release|Any CPU
 		{3BC35602-12F3-41AA-8444-CD9E19D6AC48}.Release|x86.ActiveCfg = Release|Any CPU
 		{3BC35602-12F3-41AA-8444-CD9E19D6AC48}.Release|x86.Build.0 = Release|Any CPU
+		{29E5DCD7-DAAD-478C-9909-EDC19989CD81}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{29E5DCD7-DAAD-478C-9909-EDC19989CD81}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{29E5DCD7-DAAD-478C-9909-EDC19989CD81}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{29E5DCD7-DAAD-478C-9909-EDC19989CD81}.Debug|x64.Build.0 = Debug|Any CPU
+		{29E5DCD7-DAAD-478C-9909-EDC19989CD81}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{29E5DCD7-DAAD-478C-9909-EDC19989CD81}.Debug|x86.Build.0 = Debug|Any CPU
+		{29E5DCD7-DAAD-478C-9909-EDC19989CD81}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{29E5DCD7-DAAD-478C-9909-EDC19989CD81}.Release|Any CPU.Build.0 = Release|Any CPU
+		{29E5DCD7-DAAD-478C-9909-EDC19989CD81}.Release|x64.ActiveCfg = Release|Any CPU
+		{29E5DCD7-DAAD-478C-9909-EDC19989CD81}.Release|x64.Build.0 = Release|Any CPU
+		{29E5DCD7-DAAD-478C-9909-EDC19989CD81}.Release|x86.ActiveCfg = Release|Any CPU
+		{29E5DCD7-DAAD-478C-9909-EDC19989CD81}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

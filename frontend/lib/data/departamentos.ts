@@ -1,11 +1,8 @@
-"use server";
+'use server';
 
-import { auth } from "@/auth";
-import { usegetPool, typeParameter } from "@/lib/database/connection";
-import {
-  DepartamentoFormData,
-  DepartamentoSPResult,
-} from "@/lib/schemas/departamento";
+import { apiFetch } from "@/lib/api-client";
+import { Departamento, DepartamentoFormData, DepartamentoSPResult } from "@/lib/schemas/departamento";
+import { revalidatePath } from "next/cache";
 
 // Interfaz para la lista de departamentos (para dropdowns)
 export interface DepartamentoListItem {
@@ -14,29 +11,30 @@ export interface DepartamentoListItem {
   NombreDepartamento: string;
   IdEstatusDepartamento: boolean;
   IdGerencia: number;
+  NombreGerencia?: string;
 }
 
-// Función para obtener una lista simple de departamentos activos
-export async function getDepartamentosList(): Promise<DepartamentoListItem[]> {
+interface PagedDepartamentosResponse {
+  Items: Departamento[];
+  TotalRecords: number;
+  TotalPages: number;
+  PageNumber: number;
+  PageSize: number;
+}
+
+// Función para obtener una lista simple de departamentos activos (dropdowns)
+export async function getDepartamentosList(idGerencia?: number): Promise<DepartamentoListItem[]> {
   try {
-    const pool = await usegetPool("Default");
-    const request = await pool.request();
-    const result = await request.query(`
-      SELECT IdDepartamento, NombreDepartamento 
-      FROM Gen_TDepartamento 
-      WHERE IdEstatusDepartamento = 1 
-      ORDER BY NombreDepartamento ASC
-    `);
-    return result.recordset as DepartamentoListItem[];
+    const url = idGerencia ? `/departamentos/list?idGerencia=${idGerencia}` : "/departamentos/list";
+    const data = await apiFetch<DepartamentoListItem[]>(url);
+    return data || [];
   } catch (error) {
     console.error("Failed to fetch departamentos list:", error);
     return [];
   }
 }
 
-// Las demás funciones (getDepartamentos, getDepartamentoById, etc.) permanecen aquí...
-
-// función para obtener departamento con filtros, paginación y ordenamiento
+// Función para obtener departamentos con filtros, paginación y ordenamiento
 export async function getDepartamentos(
   query: string,
   currentPage: number,
@@ -44,30 +42,25 @@ export async function getDepartamentos(
   sortBy: string,
   sortOrder: "asc" | "desc"
 ): Promise<{
-  departamentos: DepartamentoListItem[];
+  departamentos: Departamento[];
   totalPages: number;
   totalRecords: number;
 }> {
-
   try {
-    const pool = await usegetPool("Default");
-    const request = await pool.request();
-    const typeParam = await typeParameter();
+    const params = new URLSearchParams({
+      query: query || "",
+      pageNumber: currentPage.toString(),
+      pageSize: pageSize.toString(),
+      sortBy: sortBy || "NombreDepartamento",
+      sortOrder: (sortOrder || "asc").toUpperCase(),
+    });
 
-    request.input("p_SearchQuery", typeParam.NVarChar(100), query || null);
-    request.input("p_IdEstatus", typeParam.NVarChar(5), '%');
-    request.input("p_PageNumber", typeParam.Int, currentPage);
-    request.input("p_PageSize", typeParam.Int, pageSize);
-    request.input("p_SortBy", typeParam.NVarChar(50), sortBy);
-    request.input("p_SortOrder", typeParam.NVarChar(4), sortOrder.toUpperCase());
-
-    const result = await request.execute("PF_Gen_TDepartamento");
-
-    const departamentos = result.recordset as DepartamentoListItem[];
-    const totalRecords = departamentos.length > 0 ? (departamentos[0] as any).TotalRecords : 0;
-    const totalPages = Math.ceil(totalRecords / pageSize);
-
-    return { departamentos, totalPages, totalRecords };
+    const data = await apiFetch<PagedDepartamentosResponse>(`/departamentos?${params.toString()}`);
+    return {
+      departamentos: data?.Items || [],
+      totalPages: data?.TotalPages || 0,
+      totalRecords: data?.TotalRecords || 0,
+    };
   } catch (error) {
     console.error("Failed to fetch departamentos:", error);
     return { departamentos: [], totalPages: 0, totalRecords: 0 };
@@ -75,28 +68,18 @@ export async function getDepartamentos(
 }
 
 // Función para obtener un departamento por su ID
-export async function getDepartamentoById(id: number): Promise<DepartamentoListItem | null> {
+export async function getDepartamentoById(id: number): Promise<DepartamentoFormData | null> {
   try {
-    const pool = await usegetPool("Default");
-    const request = await pool.request();
-    const typeParam = await typeParameter();
-
-    request.input("p_IdDepartamento", typeParam.Int, id);
-
-    const result = await request.execute("PFK_Gen_TDepartamento");
-
-    if (result.recordset && result.recordset.length > 0) {
-      const depto = result.recordset[0] as DepartamentoListItem;
+    const data = await apiFetch<Departamento>(`/departamentos/${id}`);
+    if (data) {
       return {
-        IdDepartamento: depto.IdDepartamento,
-        ClaveDepartamento: depto.ClaveDepartamento,
-        NombreDepartamento: depto.NombreDepartamento,
-        IdEstatusDepartamento: depto.IdEstatusDepartamento,
-        IdGerencia: depto.IdGerencia
-
+        IdDepartamento: data.IdDepartamento,
+        ClaveDepartamento: data.ClaveDepartamento,
+        NombreDepartamento: data.NombreDepartamento,
+        IdGerencia: data.IdGerencia,
+        IdEstatusDepartamento: data.IdEstatusDepartamento,
       };
     }
-    
     return null;
   } catch (error) {
     console.error(`Failed to fetch departamento with ID ${id}:`, error);
@@ -108,36 +91,23 @@ export async function getDepartamentoById(id: number): Promise<DepartamentoListI
 export async function createDepartamento(
   data: DepartamentoFormData
 ): Promise<DepartamentoSPResult> {
-  const session = await auth();
-  const userId = session?.user?.id ? parseInt(session.user.id, 10) : 0;
-  if (userId === 0)
-    return { Resultado: -1, Mensaje: "Error de autenticación." };
-
   try {
-    const pool = await usegetPool("Default");
-    const request = await pool.request();
-    const typeParam = await typeParameter();
+    const result = await apiFetch<DepartamentoSPResult>("/departamentos", {
+      method: "POST",
+      body: JSON.stringify({
+        ClaveDepartamento: data.ClaveDepartamento,
+        NombreDepartamento: data.NombreDepartamento,
+        IdGerencia: data.IdGerencia,
+      }),
+    });
 
-    request.input(
-      "p_NombreDepartamento",
-      typeParam.NVarChar(100),
-      data.NombreDepartamento
-    );
-    request.input(
-      "p_ClaveDepartamento",
-      typeParam.NVarChar(40),
-      data.ClaveDepartamento
-    );
-    request.input("p_IdGerencia", typeParam.Int, data.IdGerencia);
-    request.input("p_IdEmpleadoAlta", typeParam.Int, userId);
-
-    const result = await request.execute("PI_Gen_TDepartamento");
-    return result.recordset[0] as DepartamentoSPResult;
-  } catch (error) {
+    revalidatePath("/icalidad/departamento");
+    return result;
+  } catch (error: any) {
     console.error("Failed to create departamento:", error);
     return {
       Resultado: -99,
-      Mensaje: "Error interno al crear el departamento.",
+      Mensaje: error?.message || "Error al crear el departamento.",
     };
   }
 }
@@ -147,42 +117,25 @@ export async function updateDepartamento(
   id: number,
   data: DepartamentoFormData
 ): Promise<DepartamentoSPResult> {
-  const session = await auth();
-  const userId = session?.user?.id ? parseInt(session.user.id, 10) : 0;
-  if (userId === 0)
-    return { Resultado: -1, Mensaje: "Error de autenticación." };
-
   try {
-    const pool = await usegetPool("Default");
-    const request = await pool.request();
-    const typeParam = await typeParameter();
+    const result = await apiFetch<DepartamentoSPResult>(`/departamentos/${id}`, {
+      method: "PUT",
+      body: JSON.stringify({
+        IdDepartamento: id,
+        ClaveDepartamento: data.ClaveDepartamento,
+        NombreDepartamento: data.NombreDepartamento,
+        IdGerencia: data.IdGerencia,
+        IdEstatusDepartamento: data.IdEstatusDepartamento,
+      }),
+    });
 
-    request.input("p_IdDepartamento", typeParam.Int, id);
-    request.input(
-      "p_NombreDepartamento",
-      typeParam.NVarChar(100),
-      data.NombreDepartamento
-    );
-    request.input(
-      "p_ClaveDepartamento",
-      typeParam.NVarChar(40),
-      data.ClaveDepartamento
-    );
-    request.input("p_IdGerencia", typeParam.Int, data.IdGerencia);
-    request.input(
-      "p_IdEstatusDepartamento",
-      typeParam.Bit,
-      data.IdEstatusDepartamento
-    );
-    request.input("p_IdEmpleadoActualiza", typeParam.Int, userId);
-
-    const result = await request.execute("PU_Gen_TDepartamento");
-    return result.recordset[0] as DepartamentoSPResult;
-  } catch (error) {
+    revalidatePath("/icalidad/departamento");
+    return result;
+  } catch (error: any) {
     console.error(`Failed to update departamento with ID ${id}:`, error);
     return {
       Resultado: -99,
-      Mensaje: "Error interno al actualizar el departamento.",
+      Mensaje: error?.message || "Error al actualizar el departamento.",
     };
   }
 }
@@ -190,18 +143,17 @@ export async function updateDepartamento(
 // Función para eliminar un departamento
 export async function deleteDepartamento(id: number): Promise<DepartamentoSPResult> {
   try {
-    const pool = await usegetPool("Default");
-    const request = await pool.request();
-    const typeParam = await typeParameter();
+    const result = await apiFetch<DepartamentoSPResult>(`/departamentos/${id}`, {
+      method: "DELETE",
+    });
 
-    request.input("p_IdDepartamento", typeParam.Int, id);
-    const result = await request.execute("PD_Gen_TDepartamento");
-    return result.recordset[0] as DepartamentoSPResult;
-  } catch (error) {
+    revalidatePath("/icalidad/departamento");
+    return result;
+  } catch (error: any) {
     console.error(`Failed to delete departamento with ID ${id}:`, error);
     return {
       Resultado: -99,
-      Mensaje: "Error interno al eliminar el departamento.",
+      Mensaje: error?.message || "Error al eliminar el departamento.",
     };
   }
 }

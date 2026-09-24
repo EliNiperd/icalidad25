@@ -49,9 +49,13 @@ namespace iCalidad.Infrastructure.Persistence.Configurations
             builder.Property(d => d.IdEmpleadoActualiza)
                 .HasColumnName("IdEmpleadoActualiza");
 
+            builder.Property(d => d.FechaBorrado)
+                .HasColumnName("FechaBorrado");
+
+            builder.Property(d => d.IdEmpleadoBorrado)
+                .HasColumnName("IdEmpleadoBorrado");
+
             builder.Ignore(d => d.ClaveNombreDepartamento);
-            builder.Ignore(d => d.FechaBorrado);
-            builder.Ignore(d => d.IdEmpleadoBorrado);
 
             builder.HasOne(d => d.Gerencia)
                 .WithMany()
