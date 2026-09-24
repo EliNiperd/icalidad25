@@ -7,6 +7,7 @@ COPY ["iCalidad.Domain/iCalidad.Domain.csproj", "iCalidad.Domain/"]
 COPY ["iCalidad.Application/iCalidad.Application.csproj", "iCalidad.Application/"]
 COPY ["iCalidad.Infrastructure/iCalidad.Infrastructure.csproj", "iCalidad.Infrastructure/"]
 COPY ["iCalidad.WebAPI/iCalidad.WebAPI.csproj", "iCalidad.WebAPI/"]
+COPY ["iCalidad.UnitTests/iCalidad.UnitTests.csproj", "iCalidad.UnitTests/"]
 COPY ["iCalidad.sln", "./"]
 
 RUN dotnet restore "iCalidad.sln"
