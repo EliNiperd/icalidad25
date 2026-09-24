@@ -6,21 +6,23 @@ import { TableSkeleton } from "@/app/ui/shared/skeletons";
 import GerenciasTable from "@/app/ui/gerencias/gerencias-table";
 
 interface GerenciaPageProps {
-    searchParams?: { 
+    searchParams?: Promise<{ 
         query?: string;
         page?: string;
         sortBy?: string;
         sortOrder?: 'asc' | 'desc';
-    }
+    }>;
 }
 
 export default async function GerenciaPage({ searchParams }: GerenciaPageProps) {
-
-    const query = searchParams?.query || '';
-    const currentPage = Number(searchParams?.page) || 1;
-    const sortBy = searchParams?.sortBy || 'NombreGerencia';
-    const sortOrder = searchParams?.sortOrder || 'asc';
+    const resolvedParams = searchParams ? await searchParams : {};
+    const query = resolvedParams.query || '';
+    const currentPage = Number(resolvedParams.page) || 1;
+    const sortBy = resolvedParams.sortBy || 'NombreGerencia';
+    const sortOrder = resolvedParams.sortOrder || 'asc';
     const pageSize = 10;
+
+    const suspenseKey = `${query}-${currentPage}-${sortBy}-${sortOrder}`;
 
     return (
         <>
@@ -36,7 +38,7 @@ export default async function GerenciaPage({ searchParams }: GerenciaPageProps) 
           </div>
           </div>
           
-          <Suspense fallback={<TableSkeleton cols={5} rows={pageSize} />}>
+          <Suspense key={suspenseKey} fallback={<TableSkeleton cols={5} rows={pageSize} />}>
             <GerenciasTable 
                 query={query}
                 currentPage={currentPage}

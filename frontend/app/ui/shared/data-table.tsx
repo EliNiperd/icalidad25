@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useTransition } from 'react';
+import React, { useState, useEffect, useTransition } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { PaginationControls } from './pagination';
@@ -57,10 +57,18 @@ export function DataTable<T extends { [key: string]: any }>({
   const sortBy = searchParams.get('sortBy') || defaultSortBy;
   const sortOrder = (searchParams.get('sortOrder') as 'asc' | 'desc') || defaultSortOrder;
 
+  // Local state for immediate typing feedback
+  const [searchValue, setSearchValue] = useState(searchTerm);
+
+  // Synchronize local search state if URL query changes externally
+  useEffect(() => {
+    setSearchValue(searchTerm);
+  }, [searchTerm]);
+
   const handleUrlChange = (newParams: Partial<{ query: string; page: number; sortBy: string; sortOrder: 'asc' | 'desc' }>) => {
     const params = new URLSearchParams(searchParams.toString());
     Object.entries(newParams).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
+      if (value !== undefined && value !== null && value !== '') {
         params.set(key, String(value));
       } else {
         params.delete(key);
@@ -72,8 +80,19 @@ export function DataTable<T extends { [key: string]: any }>({
     });
   };
 
+  // Debounce search URL update
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchValue !== searchTerm) {
+        handleUrlChange({ query: searchValue, page: 1 });
+      }
+    }, 350);
+
+    return () => clearTimeout(timer);
+  }, [searchValue]);
+
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    handleUrlChange({ query: e.target.value, page: 1 });
+    setSearchValue(e.target.value);
   };
 
   const handleSort = (columnKey: string) => {
@@ -122,7 +141,7 @@ export function DataTable<T extends { [key: string]: any }>({
         <Input
           type="text"
           placeholder={searchPlaceholder}
-          defaultValue={searchTerm}
+          value={searchValue}
           onChange={handleSearch}
           className="max-w-sm bg-bg-primary border-border-default"
         />

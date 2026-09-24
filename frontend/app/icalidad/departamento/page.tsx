@@ -6,21 +6,23 @@ import { TableSkeleton } from "@/app/ui/shared/skeletons";
 import DepartamentosTable from "@/app/ui/departamentos/departamentos-table";
 
 interface DepartamentoPageProps {
-    searchParams?: { 
+    searchParams?: Promise<{ 
         query?: string;
         page?: string;
         sortBy?: string;
         sortOrder?: 'asc' | 'desc';
-    }
+    }>;
 }
 
 export default async function DepartamentoPage({ searchParams }: DepartamentoPageProps) {
-
-    const query = searchParams?.query || '';
-    const currentPage = Number(searchParams?.page) || 1;
-    const sortBy = searchParams?.sortBy || 'NombreDepartamento';
-    const sortOrder = searchParams?.sortOrder || 'asc';
+    const resolvedParams = searchParams ? await searchParams : {};
+    const query = resolvedParams.query || '';
+    const currentPage = Number(resolvedParams.page) || 1;
+    const sortBy = resolvedParams.sortBy || 'NombreDepartamento';
+    const sortOrder = resolvedParams.sortOrder || 'asc';
     const pageSize = 10;
+
+    const suspenseKey = `${query}-${currentPage}-${sortBy}-${sortOrder}`;
 
     return (
         <>
@@ -36,7 +38,7 @@ export default async function DepartamentoPage({ searchParams }: DepartamentoPag
           </div>
           </div>
           
-          <Suspense fallback={<TableSkeleton cols={6} rows={pageSize} />}>
+          <Suspense key={suspenseKey} fallback={<TableSkeleton cols={6} rows={pageSize} />}>
             <DepartamentosTable 
                 query={query}
                 currentPage={currentPage}
