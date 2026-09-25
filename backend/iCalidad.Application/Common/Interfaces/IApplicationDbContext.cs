@@ -11,6 +11,7 @@ namespace iCalidad.Application.Common.Interfaces
         DbSet<Menu> Menus { get; }
         DbSet<Gerencia> Gerencias { get; }
         DbSet<Departamento> Departamentos { get; }
+        DbSet<Puesto> Puestos { get; }
 
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     }

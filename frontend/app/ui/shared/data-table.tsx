@@ -60,9 +60,9 @@ export function DataTable<T extends { [key: string]: any }>({
   // Local state for immediate typing feedback
   const [searchValue, setSearchValue] = useState(searchTerm);
 
-  // Synchronize local search state if URL query changes externally
+  // Synchronize local search state only when URL query changes externally (e.g. back/forward navigation)
   useEffect(() => {
-    setSearchValue(searchTerm);
+    setSearchValue((prev) => (prev !== searchTerm ? searchTerm : prev));
   }, [searchTerm]);
 
   const handleUrlChange = (newParams: Partial<{ query: string; page: number; sortBy: string; sortOrder: 'asc' | 'desc' }>) => {
@@ -76,7 +76,7 @@ export function DataTable<T extends { [key: string]: any }>({
     });
 
     startTransition(() => {
-      router.push(`${pathname}?${params.toString()}`);
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     });
   };
 
@@ -86,7 +86,7 @@ export function DataTable<T extends { [key: string]: any }>({
       if (searchValue !== searchTerm) {
         handleUrlChange({ query: searchValue, page: 1 });
       }
-    }, 350);
+    }, 400);
 
     return () => clearTimeout(timer);
   }, [searchValue]);

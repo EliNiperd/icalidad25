@@ -61,7 +61,10 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.PropertyNamingPolicy = null;
     });
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi(options =>
+{
+    options.AddDocumentTransformer<iCalidad.WebAPI.OpenApi.BearerSecuritySchemeTransformer>();
+});
 
 var app = builder.Build();
 
@@ -97,7 +100,11 @@ app.Use(async (context, next) =>
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
-    app.MapScalarApiReference();
+    app.MapScalarApiReference(options =>
+    {
+        options.WithTitle("iCalidad API Reference")
+               .WithTheme(ScalarTheme.Moon);
+    });
 }
 else
 {
