@@ -22,8 +22,6 @@ export default async function DepartamentoPage({ searchParams }: DepartamentoPag
     const sortOrder = resolvedParams.sortOrder || 'asc';
     const pageSize = 10;
 
-    const suspenseKey = `${query}-${currentPage}-${sortBy}-${sortOrder}`;
-
     return (
         <>
         <div className="flex justify-between items-center mx-auto py-2">
@@ -38,7 +36,7 @@ export default async function DepartamentoPage({ searchParams }: DepartamentoPag
           </div>
           </div>
           
-          <Suspense key={suspenseKey} fallback={<TableSkeleton cols={6} rows={pageSize} />}>
+          <Suspense fallback={<TableSkeleton cols={6} rows={pageSize} />}>
             <DepartamentosTable 
                 query={query}
                 currentPage={currentPage}

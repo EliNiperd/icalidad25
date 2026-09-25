@@ -271,7 +271,7 @@ Para llevar el proyecto a un nivel profesional, robusto y escalable, seguiremos 
 *   **Orden de Ejecución por Dependencia:**
     1.  **Módulo 1: Gerencias (`/icalidad/gerencia`)** — Catálogo raíz independiente (CRUD completo: Listar con paginación/filtros, Crear, Actualizar, Eliminar) **(Completado ✅)**.
     2.  **Módulo 2: Departamentos (`/icalidad/departamento`)** — Relación con Gerencias (`IdGerencia`) **(Completado ✅)**.
-    3.  **Módulo 3: Puestos (`/icalidad/puesto`)** — Relación con Departamentos (`IdDepartamento`).
+    3.  **Módulo 3: Puestos (`/icalidad/puesto`)** — Relación con Departamentos (`IdDepartamento`) **(Completado ✅)**.
     4.  **Módulo 4: Empleados (`/icalidad/empleado`)** — Relación con Puestos y asignación de Roles.
     5.  **Módulo 5: Normativas y Requisitos (`/icalidad/normativa`, `/icalidad/requisito`)** — Gestión de normas de calidad y requisitos asociados.
     6.  **Módulo 6: Procesos y Sub-Procesos (`/icalidad/proceso`)** — Gestión de procesos con estructura maestro-detalle.
@@ -305,3 +305,65 @@ Para llevar el proyecto a un nivel profesional, robusto y escalable, seguiremos 
    - Refactorización de `frontend/lib/data/departamentos.ts` hacia `apiFetch` (`/api/departamentos`), eliminando `mssql` y llamadas a SPs.
    - Actualización del esquema `Departamento` en `frontend/lib/schemas/departamento.ts` para soportar `NombreGerencia` en tablas.
    - Verificación de compilación de frontend con `pnpm build` sin errores.
+
+---
+
+## 15. Migración del Catálogo de Puestos a .NET WebAPI & EF Core (Fase 5 - Módulo 3)
+
+### Problema Original
+El catálogo de Puestos (`/icalidad/puesto`) dependía de conexiones directas a SQL Server desde el frontend mediante `mssql` y Stored Procedures (`PF_Gen_TPuesto`, `PFK_Gen_TPuesto`, `PI_Gen_TPuesto`, `PU_Gen_TPuesto`, `PD_Gen_TPuesto`), manteniendo acoplada la capa visual al motor de persistencia.
+
+### Acciones Realizadas
+1. **Backend (.NET 9 & Clean Architecture)**:
+   - **Domain**: Entidad `Puesto` con propiedades de auditoría (`IdEmpleadoAlta`, `FechaAlta`, `IdEmpleadoActualiza`, `FechaActualiza`) y relación de navegación con `Departamento`.
+   - **Infrastructure**: Configuración Fluent API `PuestoConfiguration.cs` mapeando hacia la tabla `Gen_TPuesto` con `tb.UseSqlOutputClause(false)` y relación restrictiva con `Gen_TDepartamento`. Registro en `ApplicationDbContext`.
+   - **Application**:
+     - DTOs en `PuestoDtos.cs` (`PuestoDto`, `PuestoSimpleDto`, `CreatePuestoRequest`, `UpdatePuestoRequest`, `PuestoResultDto`).
+     - Contrato `IPuestoService` e implementación `PuestoService` con:
+       - Búsqueda insensible a mayúsculas y acentos sobre nombre de puesto, nombre de departamento y estatus (Activo/Inactivo).
+       - Paginación y ordenamiento dinámico.
+       - Validación de unicidad de nombre de puesto activo (duplicados).
+       - Validación de existencia y estatus del departamento padre asignado.
+       - Eliminación física compatible con el comportamiento original.
+     - Inyección de dependencias registrada en `DependencyInjection.cs`.
+   - **WebAPI**: Controlador `PuestosController.cs` (`/api/puestos`) decorado con `[Authorize]`, obteniendo de los claims JWT el identificador del usuario para auditoría.
+2. **Suite de Pruebas Unitarias (`iCalidad.UnitTests`)**:
+   - `PuestoServiceTests`:
+     - Creación exitosa de puestos con auditoría y departamento asociado.
+     - Rechazo de nombres de puesto duplicados en estado activo.
+     - Actualización correcta de datos y auditoría de modificación.
+     - Eliminación física del registro.
+   - **Resultado:** 20/20 pruebas exitosas en toda la solución (100% passed).
+3. **Frontend (Next.js 16)**:
+   - Refactorización completa de `frontend/lib/data/puestos.ts` para consumir `/api/puestos` y `/api/puestos/list` a través de `apiFetch`.
+   - Soporte para revalidación automática de caché de rutas (`revalidatePath`).
+   - Compilación exitosa en `pnpm build`.
+
+### Resultado
+El catálogo de Puestos quedó 100% migrado a la WebAPI en C# .NET 9 con Entity Framework Core, libre de procedimientos almacenados y probado exhaustivamente.
+
+---
+
+## 16. Corrección de Foco en Filtrado de Tablas y Autenticación Bearer en Scalar OpenAPI (Versión 1.4.0)
+
+### Problema Original
+1. **Pérdida de Foco en Búsqueda de Tablas**: Al escribir en los inputs de filtro de búsqueda de las vistas de catálogos (`Gerencias`, `Departamentos`, `Puestos`), el cursor perdía el foco tras cada pulsación, requiriendo hacer clic nuevamente en la caja de texto.
+2. **Autenticación en Scalar OpenAPI**: La interfaz interactiva de Scalar en `/scalar/v1` no presentaba el botón de autorización ni permitía cargar el token JWT Bearer para realizar peticiones de prueba a los endpoints protegidos con `[Authorize]`.
+
+### Causa Raíz
+1. La clave dinámica `key={suspenseKey}` dentro de `<Suspense>` en los componentes de página provocaba que React desmontara y destruyera el árbol completo del componente (incluyendo el elemento `<Input />` enfocado) tras actualizar la URL mediante la navegación.
+2. En ASP.NET Core 9, `AddOpenApi()` genera el documento OpenAPI sin esquemas de seguridad predeterminados a menos que se defina un `IOpenApiDocumentTransformer` explícito que registre el `OpenApiSecurityScheme` de tipo `bearer`.
+
+### Acciones Realizadas
+1. **Frontend (UX & Foco en Tablas)**:
+   - Se removió `key={suspenseKey}` de los límites `<Suspense>` en `app/icalidad/gerencia/page.tsx` y `app/icalidad/departamento/page.tsx`.
+   - Se optimizó `app/ui/shared/data-table.tsx` implementando `router.replace(url, { scroll: false })` dentro de `startTransition` y ajustando la sincronización de estado local para preservar el foco del cursor durante la captura de texto.
+2. **Backend (Soporte OpenAPI & Scalar Auth)**:
+   - Se implementó `BearerSecuritySchemeTransformer.cs` en `iCalidad.WebAPI.OpenApi` implementando `IOpenApiDocumentTransformer` para declarar el esquema HTTP `Bearer` e inyectar globalmente el requerimiento de seguridad en las operaciones del documento OpenAPI.
+   - Se registró en `Program.cs` mediante `builder.Services.AddOpenApi(options => options.AddDocumentTransformer<BearerSecuritySchemeTransformer>())`.
+   - Se configuró `app.MapScalarApiReference(...)` con título personalizado y tema `Moon`.
+3. **Control de Versiones**:
+   - Incremento de versión homologado a **1.4.0** en `iCalidad.WebAPI.csproj` y `frontend/package.json`.
+
+### Resultado
+El filtro de búsqueda en todas las tablas responde de forma instantánea y fluida sin perder el foco ni interrumpir la escritura del usuario. Asimismo, la documentación viva de Scalar permite ingresar el JWT Bearer token y probar todos los endpoints autenticados desde el navegador.

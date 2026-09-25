@@ -22,8 +22,6 @@ export default async function GerenciaPage({ searchParams }: GerenciaPageProps) 
     const sortOrder = resolvedParams.sortOrder || 'asc';
     const pageSize = 10;
 
-    const suspenseKey = `${query}-${currentPage}-${sortBy}-${sortOrder}`;
-
     return (
         <>
         <div className="flex justify-between items-center mx-auto py-2">
@@ -38,7 +36,7 @@ export default async function GerenciaPage({ searchParams }: GerenciaPageProps) 
           </div>
           </div>
           
-          <Suspense key={suspenseKey} fallback={<TableSkeleton cols={5} rows={pageSize} />}>
+          <Suspense fallback={<TableSkeleton cols={5} rows={pageSize} />}>
             <GerenciasTable 
                 query={query}
                 currentPage={currentPage}
