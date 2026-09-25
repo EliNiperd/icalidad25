@@ -4,8 +4,17 @@ import CreateEditForm from "@/app/ui/puestos/create-edit-form";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink } from "@/components/ui/breadcrumb";
 import { notFound } from "next/navigation";
 
-export default async function EditPuestoPage({ params }: { params: { id: string } }) {
-  const id = parseInt(params.id, 10);
+interface EditPuestoPageProps {
+  params: Promise<{ id: string }>;
+}
+
+export default async function EditPuestoPage({ params }: EditPuestoPageProps) {
+  const resolvedParams = await params;
+  const id = parseInt(resolvedParams.id, 10);
+
+  if (isNaN(id)) {
+    notFound();
+  }
 
   const [puesto, departamentos] = await Promise.all([
     getPuestoById(id),

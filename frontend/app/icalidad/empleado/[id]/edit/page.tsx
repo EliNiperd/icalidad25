@@ -1,13 +1,21 @@
 import { getEmpleadoById } from "@/lib/data/empleados";
 import { getPuestosList } from "@/lib/data/puestos";
 import { getRolesList } from "@/lib/data/roles";
-//import CreateEditForm from "@/app/ui/empleados/create-edit-form";
 import CreateEditForm from "@/app/ui/empleados/create-edit";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink } from "@/components/ui/breadcrumb";
 import { notFound } from "next/navigation";
 
-export default async function EditEmpleadoPage({ params }: { params: { id: string } }) {
-  const id = parseInt(params.id, 10);
+interface EditEmpleadoPageProps {
+  params: Promise<{ id: string }>;
+}
+
+export default async function EditEmpleadoPage({ params }: EditEmpleadoPageProps) {
+  const resolvedParams = await params;
+  const id = parseInt(resolvedParams.id, 10);
+
+  if (isNaN(id)) {
+    notFound();
+  }
 
   const [empleado, puestos, roles] = await Promise.all([
     getEmpleadoById(id),
