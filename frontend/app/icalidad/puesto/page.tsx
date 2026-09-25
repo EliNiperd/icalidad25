@@ -6,20 +6,20 @@ import { TableSkeleton } from "@/app/ui/shared/skeletons";
 import PuestosTable from "@/app/ui/puestos/puestos-table";
 
 interface PuestoPageProps {
-    searchParams?: { 
+    searchParams?: Promise<{ 
         query?: string;
         page?: string;
         sortBy?: string;
         sortOrder?: 'asc' | 'desc';
-    }
+    }>;
 }
 
 export default async function PuestoPage({ searchParams }: PuestoPageProps) {
-
-    const query = searchParams?.query || '';
-    const currentPage = Number(searchParams?.page) || 1;
-    const sortBy = searchParams?.sortBy || 'NombrePuesto';
-    const sortOrder = searchParams?.sortOrder || 'asc';
+    const resolvedParams = searchParams ? await searchParams : {};
+    const query = resolvedParams.query || '';
+    const currentPage = Number(resolvedParams?.page) || 1;
+    const sortBy = resolvedParams?.sortBy || 'NombrePuesto';
+    const sortOrder = resolvedParams?.sortOrder || 'asc';
     const pageSize = 10;
 
     return (
