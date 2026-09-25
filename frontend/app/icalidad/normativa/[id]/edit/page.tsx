@@ -3,25 +3,33 @@ import CreateEditForm from "@/app/ui/normativas/create-edit";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink } from "@/components/ui/breadcrumb";
 import { notFound } from "next/navigation";
 
-export default async function NormativaEditPage({ params }: { params: { id: string } }) {
-    const id = parseInt(params.id, 10);
+interface EditNormativaPageProps {
+  params: Promise<{ id: string }>;
+}
 
-    // Obtener los datos de la normativa
-    const normativa = await getNormativaById(id);
+export default async function NormativaEditPage({ params }: EditNormativaPageProps) {
+  const resolvedParams = await params;
+  const id = parseInt(resolvedParams.id, 10);
 
-    if (!normativa) {
-        notFound();
-    }
+  if (isNaN(id)) {
+    notFound();
+  }
 
-    return (
-        <main >
-            <Breadcrumb>
-                <BreadcrumbItem >
-                    <BreadcrumbLink href="/icalidad/normativa">Normativas</BreadcrumbLink>
-                </BreadcrumbItem>
-            </Breadcrumb>
-            <CreateEditForm normativa={normativa} />
-        </main>
+  // Obtener los datos de la normativa
+  const normativa = await getNormativaById(id);
 
-    )
+  if (!normativa) {
+    notFound();
+  }
+
+  return (
+    <main>
+      <Breadcrumb>
+        <BreadcrumbItem>
+          <BreadcrumbLink href="/icalidad/normativa">Normativas</BreadcrumbLink>
+        </BreadcrumbItem>
+      </Breadcrumb>
+      <CreateEditForm normativa={normativa} />
+    </main>
+  );
 }

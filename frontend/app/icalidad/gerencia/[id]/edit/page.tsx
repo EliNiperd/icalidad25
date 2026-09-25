@@ -2,8 +2,18 @@ import GerenciaForm from '@/app/ui/gerencias/create-edit-form';
 import { getGerenciaById } from '@/lib/data/gerencias';
 import { notFound } from 'next/navigation';
 
-export default async function EditGerenciaPage({ params }: { params: { id: string } }) {
-  const id = Number(params.id);
+interface EditGerenciaPageProps {
+  params: Promise<{ id: string }>;
+}
+
+export default async function EditGerenciaPage({ params }: EditGerenciaPageProps) {
+  const resolvedParams = await params;
+  const id = Number(resolvedParams.id);
+
+  if (isNaN(id)) {
+    notFound();
+  }
+
   const gerencia = await getGerenciaById(id);
 
   if (!gerencia) {
