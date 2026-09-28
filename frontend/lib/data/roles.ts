@@ -1,31 +1,19 @@
 "use server";
 
-import { usegetPool } from "@/lib/database/connection";
-//import { RolFormData, RolSPResult } from "@/lib/schemas/rol";
-//import { revalidatePath } from "next/cache";
-
-// Interfaz para la lista de roles (para dropdowns)
+import { apiFetch } from "@/lib/api-client";
 
 export type RolListItem = {
   IdRol: number;
   NombreRol: string;
 };
 
-// Obtener la lista de roles para los listados
-export const getRolesList = async () => {
+// Obtener la lista de roles para dropdowns desde la WebAPI de .NET
+export const getRolesList = async (): Promise<RolListItem[]> => {
   try {
-    const pool = await usegetPool("Default");
-    const request = await pool.request();
-
-    const result = await request.query(`
-        SELECT IdRol, NombreRol 
-        FROM Gen_TRol 
-        WHERE IdEstatusRol = 1 
-        ORDER BY NombreRol ASC
-      `);
-    return result.recordset as RolListItem[];
+    const roles = await apiFetch<RolListItem[]>("/roles/list");
+    return roles || [];
   } catch (error) {
-    console.error("Failed to fetch roles list:", error);
+    console.error("Failed to fetch roles list from API:", error);
     return [];
   }
 };

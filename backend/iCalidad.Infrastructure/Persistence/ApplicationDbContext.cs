@@ -19,6 +19,7 @@ namespace iCalidad.Infrastructure.Persistence
         public DbSet<Gerencia> Gerencias => Set<Gerencia>();
         public DbSet<Departamento> Departamentos => Set<Departamento>();
         public DbSet<Puesto> Puestos => Set<Puesto>();
+        public DbSet<EmpleadoPuesto> EmpleadosPuestos => Set<EmpleadoPuesto>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

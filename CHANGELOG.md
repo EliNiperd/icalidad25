@@ -8,13 +8,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Planned
-- Migration of Módulo 2: Departamentos (`/icalidad/departamento`) to .NET 9 WebAPI & EF Core.
-- Migration of Módulo 3: Puestos (`/icalidad/puesto`).
-- Migration of Módulo 4: Empleados (`/icalidad/empleado`).
-- Migration of Módulo 5: Normativas y Requisitos.
-- Migration of Módulo 6: Procesos y Sub-Procesos.
+- Migration of Módulo 5: Normativas y Requisitos (`/icalidad/normativa`, `/icalidad/requisito`).
+- Migration of Módulo 6: Procesos y Sub-Procesos (`/icalidad/proceso`).
 
-## [1.3.0] - 2026-09-23
+## [1.5.0] - 2026-09-28
+
+### Added
+- **Fase 5 - Módulo 4: Catálogo de Empleados, Puestos Asignados y Roles (`/icalidad/empleado`)**:
+  - **Backend (.NET 9 WebAPI & EF Core)**:
+    - Domain: Entidad `Empleado` enriquecida con auditoría completa y propiedades de navegación; nueva entidad de relación `EmpleadoPuesto` (`Gen_REmpleadoPuesto`); soporte para `IdEstatusRol` en `Rol`.
+    - Infrastructure: Mapeos Fluent API en `EmpleadoConfiguration` con `tb.UseSqlOutputClause(false)`, `EmpleadoPuestoConfiguration` con clave compuesta e `IdEstatusRol` en `RolConfiguration`. Registro en `ApplicationDbContext`.
+    - Application: DTOs en `EmpleadoDtos.cs`, contrato `IEmpleadoService` e implementación `EmpleadoService` con búsqueda integral, paginación, validación de unicidad de `UserName`, y sincronización diferencial transaccional automática de puestos y roles.
+    - WebAPI: Controlador `EmpleadosController` (`GET /api/empleados`, `GET /api/empleados/list`, `GET /api/empleados/{id}`, `GET /api/empleados/{id}/puestos`, `GET /api/empleados/{id}/roles`, `POST /api/empleados`, `PUT /api/empleados/{id}`, `DELETE /api/empleados/{id}`) protegido con `[Authorize]` y extracción de claims JWT. Controlador `RolesController` (`GET /api/roles/list`).
+  - **Pruebas Unitarias Automatizadas**:
+    - `EmpleadoServiceTests` en `iCalidad.UnitTests` con 6 casos de prueba completos (creación, unicidad de usuario, sincronización diferencial de puestos/roles, consultas de sub-recursos y eliminación en cascada). 26/26 pruebas unitarias exitosas (100% passed).
+  - **Frontend (Next.js 16)**:
+    - Refactorización de `frontend/lib/data/empleados.ts` y `frontend/lib/data/roles.ts`, eliminando todas las conexiones directas a `mssql`, SPs (`PF_Gen_TEmpleado`, `PI_Gen_TEmpleado`, `PU_Gen_TEmpleado`, `PD_Gen_TEmpleado`, `PF_Gen_REmpleadoRol`) y consultas SQL cliente (`asignarPuestos`, `removerPuestos`, `asignarRoles`, `removerRoles`).
+    - Delegación total de persistencia y lógica de asignaciones a través de `apiFetch` hacia la WebAPI.
+
+## [1.4.0] - 2026-09-27
+
+### Added
+- **Fase 5 - Módulos 2 y 3: Catálogo de Departamentos y Puestos**:
+  - Migración completa de Departamentos y Puestos a .NET 9 WebAPI y EF Core con consultas LINQ y pruebas unitarias integradas.
+  - Implementación de `BearerSecuritySchemeTransformer` para habilitar autenticación Bearer JWT en la documentación interactiva Scalar OpenAPI (`/scalar/v1`).
+- **Mejoras UX & Foco en Filtrado de Tablas**:
+  - Corrección de pérdida de foco en cajas de texto de búsqueda de tablas al optimizar límites `<Suspense>` y transición no bloqueante en `DataTable`.
 
 ### Added
 - **Fase 5 - Módulo 1: Catálogo de Gerencias (`/icalidad/gerencia`)**:

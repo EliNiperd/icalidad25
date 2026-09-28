@@ -13,8 +13,11 @@ namespace iCalidad.Infrastructure.Persistence.Configurations
             builder.HasKey(r => r.IdRol);
 
             builder.Property(r => r.NombreRol)
-                .HasMaxLength(50)
-                .IsRequired();
+                .HasMaxLength(100);
+
+            builder.Property(r => r.IdEstatusRol)
+                .HasColumnName("IdEstatusRol")
+                .HasColumnType("bit");
         }
     }
 }
