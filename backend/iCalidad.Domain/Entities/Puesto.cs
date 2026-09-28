@@ -15,5 +15,6 @@ namespace iCalidad.Domain.Entities
 
         // Navegación
         public Departamento? Departamento { get; set; }
+        public ICollection<EmpleadoPuesto> EmpleadosPuestos { get; set; } = new List<EmpleadoPuesto>();
     }
 }

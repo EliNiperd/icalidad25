@@ -12,6 +12,7 @@ namespace iCalidad.Application.Common.Interfaces
         DbSet<Gerencia> Gerencias { get; }
         DbSet<Departamento> Departamentos { get; }
         DbSet<Puesto> Puestos { get; }
+        DbSet<EmpleadoPuesto> EmpleadosPuestos { get; }
 
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     }

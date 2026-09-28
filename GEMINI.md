@@ -272,7 +272,7 @@ Para llevar el proyecto a un nivel profesional, robusto y escalable, seguiremos 
     1.  **Módulo 1: Gerencias (`/icalidad/gerencia`)** — Catálogo raíz independiente (CRUD completo: Listar con paginación/filtros, Crear, Actualizar, Eliminar) **(Completado ✅)**.
     2.  **Módulo 2: Departamentos (`/icalidad/departamento`)** — Relación con Gerencias (`IdGerencia`) **(Completado ✅)**.
     3.  **Módulo 3: Puestos (`/icalidad/puesto`)** — Relación con Departamentos (`IdDepartamento`) **(Completado ✅)**.
-    4.  **Módulo 4: Empleados (`/icalidad/empleado`)** — Relación con Puestos y asignación de Roles.
+    4.  **Módulo 4: Empleados (`/icalidad/empleado`)** — Relación con Puestos y asignación de Roles **(Completado ✅)**.
     5.  **Módulo 5: Normativas y Requisitos (`/icalidad/normativa`, `/icalidad/requisito`)** — Gestión de normas de calidad y requisitos asociados.
     6.  **Módulo 6: Procesos y Sub-Procesos (`/icalidad/proceso`)** — Gestión de procesos con estructura maestro-detalle.
 
@@ -367,3 +367,60 @@ El catálogo de Puestos quedó 100% migrado a la WebAPI en C# .NET 9 con Entity 
 
 ### Resultado
 El filtro de búsqueda en todas las tablas responde de forma instantánea y fluida sin perder el foco ni interrumpir la escritura del usuario. Asimismo, la documentación viva de Scalar permite ingresar el JWT Bearer token y probar todos los endpoints autenticados desde el navegador.
+
+---
+
+## 17. Migración del Catálogo de Empleados, Puestos Asignados y Roles a .NET WebAPI & EF Core (Fase 5 - Módulo 4)
+
+### Problema Original
+El catálogo de Empleados (`/icalidad/empleado`) presentaba múltiples dependencias directas a base de datos en el frontend mediante `mssql`, incluyendo:
+1. Procedimientos almacenados para CRUD (`PF_Gen_TEmpleado`, `PI_Gen_TEmpleado`, `PU_Gen_TEmpleado`, `PD_Gen_TEmpleado`, `PF_Gen_REmpleadoRol`).
+2. Consultas e inserciones/borrados SQL directos en código cliente para asignar y remover puestos en `Gen_REmpleadoPuesto`, historial de puestos y roles en `Gen_REmpleadoRol`.
+3. Ausencia de un backend centralizado para gestionar las relaciones muchos a muchos (N:M) y la sincronización diferencial de puestos y roles.
+
+### Acciones Realizadas
+1. **Clean Architecture en Backend (.NET 9)**:
+   - **Domain**:
+     - Entidad `Empleado` completada con campos de auditoría (`FechaAlta`, `IdEmpleadoAlta`, `FechaActualiza`, `IdEmpleadoActualiza`) y colecciones de navegación hacia `EmpleadoPuesto` y `EmpleadoRol`.
+     - Creación de entidad de relación muchos a muchos `EmpleadoPuesto` (`Gen_REmpleadoPuesto`).
+     - Soporte para estatus activo en `Rol` (`IdEstatusRol`).
+   - **Infrastructure**:
+     - `EmpleadoConfiguration.cs`: mapeo a `Gen_TEmpleado` con `tb.UseSqlOutputClause(false)`.
+     - `EmpleadoPuestoConfiguration.cs`: mapeo a `Gen_REmpleadoPuesto` con llave compuesta y relaciones en cascada.
+     - `RolConfiguration.cs`: mapeo de `IdEstatusRol`.
+     - Registro de `DbSet<EmpleadoPuesto>` en `ApplicationDbContext` e `IApplicationDbContext`.
+   - **Application**:
+     - DTOs en `EmpleadoDtos.cs` (`EmpleadoDto`, `EmpleadoListItemDto`, `PuestoAsignadoDto`, `RolAsignadoDto`, `HistorialPuestoDto`, `CreateEmpleadoRequest`, `UpdateEmpleadoRequest`, `EmpleadoResultDto`).
+     - Contrato `IEmpleadoService` e implementación `EmpleadoService`:
+       - Paginación, ordenamiento dinámico y búsqueda integral (por nombre, username, correo, puestos asignados o estatus).
+       - Validación de unicidad de nombre de usuario (`UserName`).
+       - Sincronización diferencial automática y transaccional de puestos y roles (identifica elementos a agregar y remover en base de datos).
+       - Registro de auditoría con el usuario autenticado.
+     - Inyección de dependencias registrada en `DependencyInjection.cs`.
+   - **WebAPI**:
+     - Controlador `EmpleadosController.cs` (`/api/empleados`) con endpoints REST protegidos:
+       - `GET /api/empleados` (Paginación y búsqueda).
+       - `GET /api/empleados/list` (Listado activo para selectores).
+       - `GET /api/empleados/{id}` (Detalle completo).
+       - `GET /api/empleados/{id}/puestos` (Sub-recurso de puestos asignados).
+       - `GET /api/empleados/{id}/roles` (Sub-recurso de roles asignados).
+       - `POST /api/empleados` (Alta integral con asignaciones).
+       - `PUT /api/empleados/{id}` (Actualización y sincronización relacional).
+       - `DELETE /api/empleados/{id}` (Baja de empleado).
+     - Controlador `RolesController.cs` (`GET /api/roles/list`) para alimentar los selectores de roles desde la API.
+2. **Suite de Pruebas Unitarias Automatizadas (`iCalidad.UnitTests`)**:
+   - `EmpleadoServiceTests`:
+     - Creación exitosa de empleados con asignación simultánea de múltiples puestos y roles.
+     - Rechazo de `UserName` duplicado.
+     - Actualización con sincronización diferencial de puestos y roles (conservar, agregar y remover).
+     - Consulta de puestos asignados por empleado.
+     - Consulta de roles asignados por empleado.
+     - Eliminación física de empleado y limpieza de relaciones.
+   - **Resultado:** **26/26 pruebas unitarias exitosas (100% passed)** en toda la solución.
+3. **Frontend (Next.js 16)**:
+   - Refactorización de `frontend/lib/data/empleados.ts`: se eliminaron por completo las dependencias de `mssql`, `usegetPool`, `typeParameter` y consultas SQL embebidas (`asignarPuestos`, `removerPuestos`, `asignarRoles`, `removerRoles`). Todas las operaciones ahora consumen `/api/empleados` a través de `apiFetch`.
+   - Refactorización de `frontend/lib/data/roles.ts`: consume `/api/roles/list` a través de `apiFetch`.
+   - Compilación exitosa con `pnpm build` sin errores de tipado TypeScript ni de empaquetado.
+
+### Resultado
+El módulo de Empleados quedó 100% desacoplado de la persistencia directa en el cliente. Toda la lógica de relaciones con Puestos y Roles, validaciones de usuario, auditoría y paginación ahora es gobernada por la WebAPI de C# .NET 9 con Entity Framework Core.
