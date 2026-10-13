@@ -5,6 +5,7 @@ import { buildMenuTree, MenuItem } from "@/lib/utils/menu-builder";
 import SideMenu from "@/app/components/SideMenu";
 import { ThemeSwitcher } from "@/app/components/ThemeSwitcher";
 import { Button } from "@/components/ui/button";
+import { APP_VERSION, APP_NAME } from "@/lib/constants";
 
 export default async function IcalidadLayout({
   children,
@@ -59,6 +60,18 @@ export default async function IcalidadLayout({
             {children}
           </div>
         </section>
+
+        {/* Footer global inferior fijo */}
+        <footer className="bg-bg-secondary border-t border-border-default px-6 py-2 flex justify-between items-center text-xs text-text-secondary shrink-0 select-none">
+          <div className="flex items-center space-x-2">
+            <span>© {new Date().getFullYear()} {APP_NAME}</span>
+            <span className="hidden sm:inline">·</span>
+            <span className="hidden sm:inline">Sistema de Gestión de Calidad</span>
+          </div>
+          <div className="flex items-center space-x-2 font-mono">
+            <span className="font-semibold text-text-primary">{APP_VERSION}</span>
+          </div>
+        </footer>
       </div>
     </div>
   );
