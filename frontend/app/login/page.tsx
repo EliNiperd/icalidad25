@@ -1,5 +1,6 @@
 import LoginForm from "@/app/components/ui/login/login-form";
 import { ThemeSwitcher } from "@/app/components/ThemeSwitcher";
+import { APP_VERSION, APP_NAME } from "@/lib/constants";
 
 export default function LoginPage() {
   return (
@@ -18,6 +19,10 @@ export default function LoginPage() {
         <h2 className="text-3xl font-bold text-primary-600 bg-primary-500 p-3 border-b-2 border-secondary-500">Iniciar Sesión - background</h2>
         
         <LoginForm />
+
+        <footer className="text-center text-xs text-text-secondary pt-4 tracking-wide">
+          © {new Date().getFullYear()} {APP_NAME} · <span className="font-mono font-medium">{APP_VERSION}</span>
+        </footer>
       </div>
     </main>
   );
