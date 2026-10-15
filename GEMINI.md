@@ -424,3 +424,41 @@ El catálogo de Empleados (`/icalidad/empleado`) presentaba múltiples dependenc
 
 ### Resultado
 El módulo de Empleados quedó 100% desacoplado de la persistencia directa en el cliente. Toda la lógica de relaciones con Puestos y Roles, validaciones de usuario, auditoría y paginación ahora es gobernada por la WebAPI de C# .NET 9 con Entity Framework Core.
+
+---
+
+## 18. Indicador de Versionamiento Global (UI) y Preparación del Módulo 5 (Versión 1.5.0)
+
+### Resumen de Ajustes Realizados
+1. **Centralización del Versionamiento**:
+   - Creación de `frontend/lib/constants.ts` vinculando dinámicamente `APP_VERSION` (`v1.5.0`) y `APP_NAME` desde `package.json`.
+2. **Integración Visual en Layouts**:
+   - **Login (`frontend/app/login/page.tsx`)**: Pie de tarjeta centrado y estilizado mostrando copyright y versión (`© 2026 iCalidad · v1.5.0`).
+   - **Layout General Interior (`frontend/app/icalidad/layout.tsx`)**: Barra inferior fija (footer global) con copyright a la izquierda y número de versión en tipografía monoespaciada a la derecha, homologado con el diseño solicitado en temas claro y oscuro.
+3. **Paginación y Modal de Eliminación en Empleados**:
+   - Ajuste de `searchParams` en `app/icalidad/empleado/page.tsx` para resolver como `Promise` con `await`, habilitando el correcto filtrado y paginación bajo Next.js 16.
+   - Integración de `DeleteConfirmDialog` en `empleado-actions.tsx` para estandarizar la confirmación de borrado.
+4. **Verificación de Compilación**:
+   - Compilación exitosa con `pnpm build` (0 errores) y pruebas unitarias en backend al 100% (26/26).
+
+---
+
+## Estado Actual del Proyecto y Punto de Partida para el Siguiente Chat
+
+### Catálogos Migrados al 100% (0 Stored Procedures, 100% .NET WebAPI & EF Core):
+1. **Autenticación y Seguridad** (`/api/auth/login`, JWT Bearer con claims).
+2. **Navegación Dinámica** (`/api/menu`, `Gen_TMenu`).
+3. **Módulo 1: Gerencias** (`/icalidad/gerencia` -> `/api/gerencias`).
+4. **Módulo 2: Departamentos** (`/icalidad/departamento` -> `/api/departamentos`).
+5. **Módulo 3: Puestos** (`/icalidad/puesto` -> `/api/puestos`).
+6. **Módulo 4: Empleados** (`/icalidad/empleado` -> `/api/empleados` y `/api/roles/list`).
+
+### Siguiente Módulo a Ejecutar:
+👉 **Módulo 5: Normativas y Requisitos (`/icalidad/normativa`, `/icalidad/requisito`)**
+- **Objetivo:** Erradicar los 10 Stored Procedures restantes asociados a normativas y requisitos (`PF_Gen_TNormativa`, `PFK_`, `PI_`, `PU_`, `PD_` y `PF_Gen_TRequisito`, `PFK_`, `PI_`, `PU_`, `PD_`).
+- **Paso inicial al abrir el nuevo chat:**
+  1. Diseñar entidades `Normativa` y `Requisito` en `iCalidad.Domain`.
+  2. Configuraciones Fluent API en `iCalidad.Infrastructure` (`Gen_TNormativa`, `Gen_TRequisito`).
+  3. Servicios `NormativaService` y `RequisitoService` en `iCalidad.Application`.
+  4. Controladores `NormativasController` y `RequisitosController` en `iCalidad.WebAPI`.
+  5. Refactorizar `frontend/lib/data/normativas.ts` y `frontend/lib/data/requisitos.ts` con `apiFetch`.
