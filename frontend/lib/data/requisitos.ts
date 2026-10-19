@@ -1,152 +1,158 @@
-'use server';
+"use server";
 
-import { auth } from "@/auth";
-import { usegetPool, typeParameter } from "@/lib/database/connection";
+import { apiFetch } from "@/lib/api-client";
 import { RequisitoFormData } from "@/lib/schemas/requisito";
+import { revalidatePath } from "next/cache";
 
-interface RequisitosListItem {
+export interface RequisitosListItem {
   IdRequisito: number;
   ClaveRequisito: string;
   NombreRequisito: string;
   IdNormativa: number;
+  ClaveNormativa?: string;
   NombreNormativa?: string;
+  ClaveNombreRequisito?: string;
   IdEstatusRequisito: boolean;
-  TextoRequisito: string;
+  TextoRequisito?: string;
+  IdTipoRequisito?: number;
+  Estatus?: string;
 }
 
-// Interfaz para el resultado de los SPs de CUD (Create, Update, Delete)
+interface PagedRequisitosResponse {
+  Items: RequisitosListItem[];
+  TotalRecords: number;
+  TotalPages: number;
+  PageNumber: number;
+  PageSize: number;
+}
+
+// Interfaz para el resultado de las acciones CUD
 export interface RequisitoSPResult {
   Resultado: number;
   Mensaje: string;
 }
 
-
-// Función para recuperar todos los requisitos
+// Función para recuperar todos los requisitos con paginación y filtros
 export async function getRequisitos(
   query: string,
   currentPage: number,
   pageSize: number,
   sortBy: string,
-  sortOrder: 'asc' | 'desc'
-
-): Promise<{ 
+  sortOrder: "asc" | "desc",
+  idNormativa?: number
+): Promise<{
   requisitos: RequisitosListItem[];
   totalPages: number;
-  totalRecords: number
+  totalRecords: number;
 }> {
-
   try {
-    const pool = await usegetPool("Default");
-    const request = await pool.request();
-    const typeParam = await typeParameter();
+    const params = new URLSearchParams({
+      query: query || "",
+      pageNumber: currentPage.toString(),
+      pageSize: pageSize.toString(),
+      sortBy: sortBy || "ClaveRequisito",
+      sortOrder: (sortOrder || "asc").toUpperCase(),
+    });
 
-    request.input("p_SearchQuery", typeParam.NVarChar(100), query || null);
-    request.input("p_IdEstatus", typeParam.NVarChar(5), '%');
-    request.input("p_PageNumber", typeParam.Int, currentPage);
-    request.input("p_PageSize", typeParam.Int, pageSize);
-    request.input("p_SortBy", typeParam.NVarChar(50), sortBy);
-    request.input("p_SortOrder", typeParam.NVarChar(4), sortOrder.toUpperCase());
+    if (idNormativa && idNormativa > 0) {
+      params.append("idNormativa", idNormativa.toString());
+    }
 
-    const result = await request.execute("PF_Gen_TRequisito");
-
-    const requisitos = result.recordset as RequisitosListItem[];
-    const totalRecords = requisitos.length > 0 ? (requisitos[0] as any).TotalRecords : 0;
-    const totalPages = Math.ceil(totalRecords / pageSize);
-
-    return { requisitos, totalPages, totalRecords };
+    const data = await apiFetch<PagedRequisitosResponse>(`/requisitos?${params.toString()}`);
+    return {
+      requisitos: data?.Items || [],
+      totalPages: data?.TotalPages || 0,
+      totalRecords: data?.TotalRecords || 0,
+    };
   } catch (error) {
     console.error("Failed to fetch requisitos:", error);
     return { requisitos: [], totalPages: 0, totalRecords: 0 };
   }
-
-  
 }
 
-
+export async function getRequisitosByNormativa(idNormativa: number): Promise<RequisitosListItem[]> {
+  try {
+    const data = await apiFetch<RequisitosListItem[]>(`/requisitos/normativa/${idNormativa}`);
+    return data || [];
+  } catch (error) {
+    console.error(`Failed to fetch requisitos for normativa ${idNormativa}:`, error);
+    return [];
+  }
+}
 
 export async function getRequisitoById(id: number): Promise<RequisitosListItem | null> {
-   try {
-      const pool = await usegetPool("Default");
-      const request = await pool.request();
-      const typeParam = await typeParameter();
-  
-      request.input("p_IdRequisito", typeParam.Int, id);
-      const result = await request.execute("PFK_Gen_TRequisito");
-      const requisito = result.recordset[0] as RequisitosListItem;
-      return requisito;
-    } catch (error) {
-      console.error(`Failed to fetch requisito with ID ${id}:`, error);
-      return null;
-    }
+  try {
+    const data = await apiFetch<RequisitosListItem>(`/requisitos/${id}`);
+    return data || null;
+  } catch (error) {
+    console.error(`Failed to fetch requisito with ID ${id}:`, error);
+    return null;
+  }
 }
 
 export async function createRequisito(data: RequisitoFormData): Promise<RequisitoSPResult> {
-  const session = await auth();
-  const userId = session?.user?.id ? parseInt(session.user.id, 10) : 0;
-  if (userId === 0) return { Resultado: -1, Mensaje: "Error de autenticación." };
-
   try {
-    const pool = await usegetPool("Default");
-    const request = await pool.request();
-    const typeParam = await typeParameter();
+    const response = await apiFetch<RequisitoSPResult>("/requisitos", {
+      method: "POST",
+      body: JSON.stringify({
+        ClaveRequisito: data.ClaveRequisito,
+        NombreRequisito: data.NombreRequisito,
+        IdNormativa: data.IdNormativa,
+        TextoRequisito: data.TextoRequisito,
+      }),
+    });
 
-    request.input("p_ClaveRequisito", typeParam.NVarChar(50), data.ClaveRequisito);
-    request.input("p_NombreRequisito", typeParam.NVarChar(250), data.NombreRequisito);
-    request.input("p_IdNormativa", typeParam.Int, data.IdNormativa);
-    request.input("p_IdEmpleadoAlta", typeParam.Int, userId);
-    request.input("p_TextoRequisito", typeParam.NVarChar(250), data.TextoRequisito)
-    
-
-    const result = await request.execute("PI_Gen_TRequisito");
-    return result.recordset[0] as RequisitoSPResult;
-  } catch (error) {
+    revalidatePath("/icalidad/requisito");
+    return response || { Resultado: 1, Mensaje: "Requisito creado exitosamente." };
+  } catch (error: any) {
     console.error("Failed to create requisito:", error);
-    return { Resultado: -99, Mensaje: "Error interno al crear el requisito." };
+    return {
+      Resultado: -1,
+      Mensaje: error.message || "Error interno al crear el requisito.",
+    };
   }
 }
 
 export async function updateRequisito(id: number, data: RequisitoFormData): Promise<RequisitoSPResult> {
-  const session = await auth();
-  const userId = session?.user?.id ? parseInt(session.user.id, 10) : 0;
-  if (userId === 0) return { Resultado: -1, Mensaje: "Error de autenticación." };
-
   try {
-    const pool = await usegetPool("Default");
-    const request = await pool.request();
-    const typeParam = await typeParameter();
+    const response = await apiFetch<RequisitoSPResult>(`/requisitos/${id}`, {
+      method: "PUT",
+      body: JSON.stringify({
+        IdRequisito: id,
+        ClaveRequisito: data.ClaveRequisito,
+        NombreRequisito: data.NombreRequisito,
+        IdNormativa: data.IdNormativa,
+        IdEstatusRequisito: data.IdEstatusRequisito,
+        TextoRequisito: data.TextoRequisito,
+      }),
+    });
 
-    request.input("p_IdRequisito", typeParam.Int, id);
-    request.input("p_ClaveRequisito", typeParam.NVarChar(50), data.ClaveRequisito);
-    request.input("p_NombreRequisito", typeParam.NVarChar(250), data.NombreRequisito);
-    request.input("p_IdNormativa", typeParam.Int, data.IdNormativa);
-    request.input("p_IdEstatusRequisito", typeParam.Bit, data.IdEstatusRequisito);
-    request.input("p_IdEmpleadoActualiza", typeParam.Int, userId);
-    request.input("p_TextoRequisito", typeParam.NVarChar(1000), data.TextoRequisito)
-
-    const result = await request.execute("PU_Gen_TRequisito");
-    return result.recordset[0] as RequisitoSPResult;
-  } catch (error) {
+    revalidatePath("/icalidad/requisito");
+    revalidatePath(`/icalidad/requisito/${id}/edit`);
+    return response || { Resultado: id, Mensaje: "Requisito actualizado exitosamente." };
+  } catch (error: any) {
     console.error(`Failed to update requisito with ID ${id}:`, error);
-    return { Resultado: -99, Mensaje: "Error interno al actualizar el requisito." };
+    return {
+      Resultado: -1,
+      Mensaje: error.message || "Error interno al actualizar el requisito.",
+    };
   }
 }
-
 
 // Función para eliminar un requisito
 export async function deleteRequisito(id: number): Promise<RequisitoSPResult> {
   try {
-    const pool = await usegetPool("Default");
-    const request = await pool.request();
-    const typeParam = await typeParameter();
+    const response = await apiFetch<RequisitoSPResult>(`/requisitos/${id}`, {
+      method: "DELETE",
+    });
 
-    request.input("p_IdRequisito", typeParam.Int, id);
-    const result = await request.execute("PD_Gen_TRequisito");
-    return result.recordset[0] as RequisitoSPResult;
-  } catch (error) {
+    revalidatePath("/icalidad/requisito");
+    return response || { Resultado: 1, Mensaje: "Requisito eliminado exitosamente." };
+  } catch (error: any) {
     console.error(`Failed to delete requisito with ID ${id}:`, error);
     return {
-      Resultado: -99,
-      Mensaje: "Error interno al eliminar el requisito.",
+      Resultado: -1,
+      Mensaje: error.message || "Error interno al eliminar el requisito.",
     };
   }
 }
