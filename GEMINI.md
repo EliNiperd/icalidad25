@@ -273,7 +273,7 @@ Para llevar el proyecto a un nivel profesional, robusto y escalable, seguiremos 
     2.  **Módulo 2: Departamentos (`/icalidad/departamento`)** — Relación con Gerencias (`IdGerencia`) **(Completado ✅)**.
     3.  **Módulo 3: Puestos (`/icalidad/puesto`)** — Relación con Departamentos (`IdDepartamento`) **(Completado ✅)**.
     4.  **Módulo 4: Empleados (`/icalidad/empleado`)** — Relación con Puestos y asignación de Roles **(Completado ✅)**.
-    5.  **Módulo 5: Normativas y Requisitos (`/icalidad/normativa`, `/icalidad/requisito`)** — Gestión de normas de calidad y requisitos asociados.
+    5.  **Módulo 5: Normativas y Requisitos (`/icalidad/normativa`, `/icalidad/requisito`)** — Gestión de normas de calidad y requisitos asociados **(Completado ✅)**.
     6.  **Módulo 6: Procesos y Sub-Procesos (`/icalidad/proceso`)** — Gestión de procesos con estructura maestro-detalle.
 
 ---
@@ -424,3 +424,80 @@ El catálogo de Empleados (`/icalidad/empleado`) presentaba múltiples dependenc
 
 ### Resultado
 El módulo de Empleados quedó 100% desacoplado de la persistencia directa en el cliente. Toda la lógica de relaciones con Puestos y Roles, validaciones de usuario, auditoría y paginación ahora es gobernada por la WebAPI de C# .NET 9 con Entity Framework Core.
+
+---
+
+## 18. Indicador de Versionamiento Global (UI) y Preparación del Módulo 5 (Versión 1.5.0)
+
+### Resumen de Ajustes Realizados
+1. **Centralización del Versionamiento**:
+   - Creación de `frontend/lib/constants.ts` vinculando dinámicamente `APP_VERSION` (`v1.5.0`) y `APP_NAME` desde `package.json`.
+2. **Integración Visual en Layouts**:
+   - **Login (`frontend/app/login/page.tsx`)**: Pie de tarjeta centrado y estilizado mostrando copyright y versión (`© 2026 iCalidad · v1.5.0`).
+   - **Layout General Interior (`frontend/app/icalidad/layout.tsx`)**: Barra inferior fija (footer global) con copyright a la izquierda y número de versión en tipografía monoespaciada a la derecha, homologado con el diseño solicitado en temas claro y oscuro.
+3. **Paginación y Modal de Eliminación en Empleados**:
+   - Ajuste de `searchParams` en `app/icalidad/empleado/page.tsx` para resolver como `Promise` con `await`, habilitando el correcto filtrado y paginación bajo Next.js 16.
+   - Integración de `DeleteConfirmDialog` en `empleado-actions.tsx` para estandarizar la confirmación de borrado.
+4. **Verificación de Compilación**:
+   - Compilación exitosa con `pnpm build` (0 errores) y pruebas unitarias en backend al 100% (26/26).
+
+## 19. Migración de los Catálogos de Normativas y Requisitos a .NET WebAPI & EF Core (Fase 5 - Módulo 5 - Versión 1.6.0)
+
+### Problema Original
+Los catálogos de Normativas (`/icalidad/normativa`) y Requisitos (`/icalidad/requisito`) dependían de conexiones directas a SQL Server desde el frontend mediante `mssql` y la ejecución de 10 Stored Procedures legados:
+- Normativas: `PF_Gen_TNormativa`, `PFK_Gen_TNormativa`, `PI_Gen_TNormativa`, `PU_Gen_TNormativa`, `PD_Gen_TNormativa`.
+- Requisitos: `PF_Gen_TRequisito`, `PFK_Gen_TRequisito`, `PI_Gen_TRequisito`, `PU_Gen_TRequisito`, `PD_Gen_TRequisito`.
+
+### Acciones Realizadas
+1. **Backend (.NET 9 & Clean Architecture)**:
+   - **Domain**:
+     - Entidad `Normativa` (`Gen_TNormativa`) con campos de auditoría (`IdEmpleadoAlta`, `FechaAlta`, `IdEmpleadoActualiza`, `FechaActualiza`) y relación de navegación hacia `Requisitos`.
+     - Entidad `Requisito` (`Gen_TRequisito`) con campos de clave, nombre, texto de requisito, tipo de requisito, auditoría y relación con `Normativa`.
+   - **Infrastructure**:
+     - `NormativaConfiguration.cs`: Mapeo Fluent API con `tb.UseSqlOutputClause(false)`, columnas generadas (`ClaveNombreNormativa`) y relación restrictiva con requisitos.
+     - `RequisitoConfiguration.cs`: Mapeo Fluent API con `tb.UseSqlOutputClause(false)`, columna generada (`ClaveNombreRequisito`) y relación con normativa.
+     - Registro de `DbSet<Normativa>` y `DbSet<Requisito>` en `ApplicationDbContext` e `IApplicationDbContext`.
+   - **Application**:
+     - DTOs en `NormativaDtos.cs` y `RequisitoDtos.cs` (`NormativaDto`, `NormativaSimpleDto`, `CreateNormativaRequest`, `UpdateNormativaRequest`, `NormativaResultDto`, `RequisitoDto`, `CreateRequisitoRequest`, `UpdateRequisitoRequest`, `RequisitoResultDto`).
+     - Contratos `INormativaService` e `IRequisitoService` e implementaciones `NormativaService` y `RequisitoService` con:
+       - Paginación, ordenamiento dinámico y búsqueda integral insensible a mayúsculas/acentos.
+       - Validación de unicidad de clave y nombre de normativa.
+       - Validación de normativa padre existente y activa al crear/actualizar requisitos.
+       - Validación de unicidad de clave de requisito por normativa.
+       - Restricción de eliminación de normativas con requisitos vinculados.
+       - Registro de auditoría con el usuario autenticado.
+     - Inyección de dependencias registrada en `DependencyInjection.cs`.
+   - **WebAPI**:
+     - Controlador `NormativasController.cs` (`/api/normativas`): `GET /`, `GET /list`, `GET /{id}`, `POST /`, `PUT /{id}`, `DELETE /{id}` protegidos con `[Authorize]`.
+     - Controlador `RequisitosController.cs` (`/api/requisitos`): `GET /`, `GET /normativa/{idNormativa}`, `GET /{id}`, `POST /`, `PUT /{id}`, `DELETE /{id}` protegidos con `[Authorize]`.
+2. **Suite de Pruebas Unitarias Automatizadas (`iCalidad.UnitTests`)**:
+   - `NormativaServiceTests`: creación exitosa con auditoría, prevención de claves/nombres duplicados, actualización, bloqueo de eliminación con requisitos asociados y eliminación física limpia.
+   - `RequisitoServiceTests`: creación exitosa con texto largo y auditoría, rechazo de normativa padre inexistente, prevención de claves duplicadas por normativa, actualización y eliminación.
+   - **Resultado:** **36/36 pruebas unitarias exitosas (100% passed)** en toda la solución.
+3. **Frontend (Next.js 16)**:
+   - Refactorización completa de `frontend/lib/data/normativas.ts` y `frontend/lib/data/requisitos.ts` hacia `apiFetch`, erradicando `mssql` y llamadas directas a SPs.
+   - Actualización del tipado en `frontend/lib/schemas/requisito.ts` (`TextoRequisito?: string`).
+   - Actualización de `searchParams` a `Promise` con `await` en `normativa/page.tsx` y `requisito/page.tsx` para compatibilidad completa con Next.js 16.
+   - Compilación exitosa en `pnpm build` (0 errores de TypeScript y 0 errores de empaquetado).
+4. **Control de Versiones**:
+   - Incremento homologado a **Versión 1.6.0** en `package.json` y `iCalidad.WebAPI.csproj`.
+
+### Resultado
+Los catálogos de Normativas y Requisitos quedaron 100% migrados a la WebAPI en C# .NET 9 con Entity Framework Core, eliminando 10 procedimientos almacenados legados y con cobertura de pruebas unitarias al 100%.
+
+---
+
+## Estado Actual del Proyecto y Punto de Partida para el Siguiente Chat
+
+### Catálogos Migrados al 100% (0 Stored Procedures, 100% .NET WebAPI & EF Core):
+1. **Autenticación y Seguridad** (`/api/auth/login`, JWT Bearer con claims).
+2. **Navegación Dinámica** (`/api/menu`, `Gen_TMenu`).
+3. **Módulo 1: Gerencias** (`/icalidad/gerencia` -> `/api/gerencias`).
+4. **Módulo 2: Departamentos** (`/icalidad/departamento` -> `/api/departamentos`).
+5. **Módulo 3: Puestos** (`/icalidad/puesto` -> `/api/puestos`).
+6. **Módulo 4: Empleados** (`/icalidad/empleado` -> `/api/empleados` y `/api/roles/list`).
+7. **Módulo 5: Normativas y Requisitos** (`/icalidad/normativa` -> `/api/normativas`, `/icalidad/requisito` -> `/api/requisitos`).
+
+### Siguiente Módulo a Ejecutar:
+👉 **Módulo 6: Procesos y Sub-Procesos (`/icalidad/proceso`)**
+- **Objetivo:** Erradicar los Stored Procedures restantes asociados a Procesos y Sub-Procesos (`PF_Gen_TProceso`, `PFK_`, `PI_`, `PU_`, `PD_` y Sub-Procesos), implementando su arquitectura maestro-detalle en .NET WebAPI y EF Core.

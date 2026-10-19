@@ -7,7 +7,7 @@ export interface Requisito {
     IdNormativa: number;
     NombreNormativa?: string;
     IdEstatusRequisito: boolean;
-    TextoRequisito: string;
+    TextoRequisito?: string;
 }
 
 // Esquema de validación para el formulario de Requisito

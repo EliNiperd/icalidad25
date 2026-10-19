@@ -6,20 +6,20 @@ import { TableSkeleton } from "@/app/ui/shared/skeletons";
 import RequisitosTable from "@/app/ui/requisitos/requisitos-table";
 
 interface RequisitoPageProps {
-    searchParams?: { 
+    searchParams?: Promise<{ 
         query?: string;
         page?: string;
         sortBy?: string;
         sortOrder?: 'asc' | 'desc';
-    }
+    }>;
 }
 
 export default async function RequisitoPage({ searchParams }: RequisitoPageProps) {
-
-    const query = searchParams?.query || '';
-    const currentPage = Number(searchParams?.page) || 1;
-    const sortBy = searchParams?.sortBy || 'NombreRequisito';
-    const sortOrder = searchParams?.sortOrder || 'asc';
+    const resolvedParams = searchParams ? await searchParams : {};
+    const query = resolvedParams.query || '';
+    const currentPage = Number(resolvedParams?.page) || 1;
+    const sortBy = resolvedParams?.sortBy || 'NombreRequisito';
+    const sortOrder = resolvedParams?.sortOrder || 'asc';
     const pageSize = 10;
 
     return (

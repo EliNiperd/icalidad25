@@ -14,6 +14,8 @@ namespace iCalidad.Application
             services.AddScoped<IDepartamentoService, DepartamentoService>();
             services.AddScoped<IPuestoService, PuestoService>();
             services.AddScoped<IEmpleadoService, EmpleadoService>();
+            services.AddScoped<INormativaService, NormativaService>();
+            services.AddScoped<IRequisitoService, RequisitoService>();
             return services;
         }
     }
