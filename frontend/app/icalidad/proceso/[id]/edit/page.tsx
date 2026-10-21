@@ -3,6 +3,7 @@ import { getEmpleadosList } from "@/lib/data/empleados";
 import CreateEditForm from "@/app/ui/procesos/create-edit-form";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { notFound } from "next/navigation";
+import { ProcesoFormData } from "@/lib/schemas/proceso";
 
 interface EditProcesoProps {
   params: Promise<{ id: string }>;
@@ -25,6 +26,14 @@ export default async function EditProceso({ params }: EditProcesoProps) {
     notFound();
   }
 
+  const formData: ProcesoFormData = {
+    IdProceso: proceso.IdProceso,
+    ClaveProceso: proceso.ClaveProceso,
+    NombreProceso: proceso.NombreProceso,
+    IdEstatusProceso: proceso.IdEstatusProceso,
+    IdEmpleadoResponsable: proceso.IdEmpleadoResponsable ?? 0,
+  };
+
   return (
     <>
       <main>
@@ -39,7 +48,7 @@ export default async function EditProceso({ params }: EditProcesoProps) {
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
-        <CreateEditForm proceso={proceso} empleados={empleados} />
+        <CreateEditForm proceso={formData} empleados={empleados} />
       </main>
     </>
   );

@@ -274,7 +274,7 @@ Para llevar el proyecto a un nivel profesional, robusto y escalable, seguiremos 
     3.  **Módulo 3: Puestos (`/icalidad/puesto`)** — Relación con Departamentos (`IdDepartamento`) **(Completado ✅)**.
     4.  **Módulo 4: Empleados (`/icalidad/empleado`)** — Relación con Puestos y asignación de Roles **(Completado ✅)**.
     5.  **Módulo 5: Normativas y Requisitos (`/icalidad/normativa`, `/icalidad/requisito`)** — Gestión de normas de calidad y requisitos asociados **(Completado ✅)**.
-    6.  **Módulo 6: Procesos y Sub-Procesos (`/icalidad/proceso`)** — Gestión de procesos con estructura maestro-detalle.
+    6.  **Módulo 6: Procesos y Sub-Procesos (`/icalidad/proceso`)** — Gestión de procesos con estructura maestro-detalle **(Completado ✅)**.
 
 ---
 
@@ -501,3 +501,64 @@ Los catálogos de Normativas y Requisitos quedaron 100% migrados a la WebAPI en 
 ### Siguiente Módulo a Ejecutar:
 👉 **Módulo 6: Procesos y Sub-Procesos (`/icalidad/proceso`)**
 - **Objetivo:** Erradicar los Stored Procedures restantes asociados a Procesos y Sub-Procesos (`PF_Gen_TProceso`, `PFK_`, `PI_`, `PU_`, `PD_` y Sub-Procesos), implementando su arquitectura maestro-detalle en .NET WebAPI y EF Core.
+
+
+## 20. Migración del Catálogo de Procesos y Sub-Procesos a .NET WebAPI & EF Core (Fase 5 - Módulo 6 - Versión 1.7.0)
+
+### Problema Original
+El catálogo de Procesos (`/icalidad/proceso`) y Sub-Procesos dependía de conexiones directas a SQL Server desde el frontend mediante `mssql` y la ejecución de Stored Procedures legados:
+- Procesos: `PF_Gen_TProceso`, `PFK_Gen_TProceso`, `PI_Gen_TProceso`, `PU_Gen_TProceso`, `PD_Gen_TProceso`.
+- Sub-Procesos: `PF_Gen_RProcesoSubProceso`, `PI_Gen_RProcesoSubProceso`, `PU_Gen_RProcesoSubProceso`, `PD_Gen_RProcesoSubProceso`.
+
+### Acciones Realizadas
+1. **Backend (.NET 9 & Clean Architecture)**:
+   - **Domain**:
+     - Entidad `Proceso` (`Gen_TProceso`) con campos de auditoría, relación 1:N hacia `SubProcesos` y navegación con `EmpleadoResponsable`.
+     - Entidad `SubProceso` (`Gen_RProcesoSubProceso`) con auditoría y relación con `Proceso`.
+   - **Infrastructure**:
+     - `ProcesoConfiguration.cs`: Mapeo Fluent API con `tb.UseSqlOutputClause(false)`, columna generada (`ClaveNombreProceso`) y relación con sub-procesos en cascada.
+     - `SubProcesoConfiguration.cs`: Mapeo Fluent API con `tb.UseSqlOutputClause(false)` y clave foránea `IdProceso`.
+     - Registro de `DbSet<Proceso>` y `DbSet<SubProceso>` en `ApplicationDbContext` e `IApplicationDbContext`.
+   - **Application**:
+     - DTOs en `ProcesoDtos.cs` (`ProcesoDto`, `ProcesoSimpleDto`, `CreateProcesoRequest`, `UpdateProcesoRequest`, `ProcesoResultDto`, `SubProcesoDto`, `CreateSubProcesoRequest`, `UpdateSubProcesoRequest`, `SubProcesoResultDto`).
+     - Contrato `IProcesoService` e implementación `ProcesoService` con:
+       - Paginación, ordenamiento dinámico y búsqueda integral (por clave, nombre o empleado responsable).
+       - Validación de unicidad de clave y nombre de proceso.
+       - Validación de unicidad de clave de sub-proceso por proceso.
+       - Gestión completa de sub-procesos (CRUD).
+       - Auditoría transaccional con usuario del JWT.
+     - Inyección de dependencias registrada en `DependencyInjection.cs`.
+   - **WebAPI**:
+     - Controlador `ProcesosController.cs` (`/api/procesos`): `GET /`, `GET /list`, `GET /{id}`, `POST /`, `PUT /{id}`, `DELETE /{id}`, además de sub-recursos para sub-procesos (`GET /{id}/subprocesos`, `POST /{id}/subprocesos`, `PUT /subprocesos/{idSubProceso}`, `DELETE /subprocesos/{idSubProceso}`) protegidos con `[Authorize]`.
+2. **Suite de Pruebas Unitarias Automatizadas (`iCalidad.UnitTests`)**:
+   - `ProcesoServiceTests`: creación exitosa con auditoría y empleado responsable, validación de duplicados, actualización, gestión y listado de sub-procesos y eliminación física.
+   - **Resultado:** **41/41 pruebas unitarias exitosas (100% passed)** en toda la solución.
+3. **Frontend (Next.js 16)**:
+   - Refactorización completa de `frontend/lib/data/procesos.ts` y `frontend/lib/data/subprocesos.ts` hacia `apiFetch`, erradicando `mssql` y llamadas a Stored Procedures.
+   - Actualización de `searchParams` a `Promise` con `await` en `proceso/page.tsx` para Next.js 16.
+   - Compatibilidad de tipos en `procesoSchema` (`IdEmpleadoResponsable?: number`) y mapeo en `proceso/[id]/edit/page.tsx`.
+   - Compilación exitosa en `pnpm build` (0 errores de TypeScript y empaquetado completado).
+4. **Control de Versiones**:
+   - Incremento homologado a **Versión 1.7.0** en `package.json` y `iCalidad.WebAPI.csproj`.
+
+### Resultado
+El catálogo de Procesos y Sub-Procesos quedó 100% migrado a la WebAPI en C# .NET 9 con Entity Framework Core. Con este hito, **todos los catálogos de la Fase 5 del sistema han sido completamente desvinculados de Stored Procedures**.
+
+---
+
+## Estado Actual del Proyecto y Punto de Partida para la Siguiente Fase
+
+### Catálogos Migrados al 100% (0 Stored Procedures, 100% .NET WebAPI & EF Core):
+1. **Autenticación y Seguridad** (`/api/auth/login`, JWT Bearer con claims).
+2. **Navegación Dinámica** (`/api/menu`, `Gen_TMenu`).
+3. **Módulo 1: Gerencias** (`/icalidad/gerencia` -> `/api/gerencias`).
+4. **Módulo 2: Departamentos** (`/icalidad/departamento` -> `/api/departamentos`).
+5. **Módulo 3: Puestos** (`/icalidad/puesto` -> `/api/puestos`).
+6. **Módulo 4: Empleados** (`/icalidad/empleado` -> `/api/empleados` y `/api/roles/list`).
+7. **Módulo 5: Normativas y Requisitos** (`/icalidad/normativa` -> `/api/normativas`, `/icalidad/requisito` -> `/api/requisitos`).
+8. **Módulo 6: Procesos y Sub-Procesos** (`/icalidad/proceso` -> `/api/procesos`).
+
+### Próxima Fase:
+👉 **Fase 6: Módulo Operativo de Auditorías (`Aud_*`) y Eliminación de Conexión Legada `mssql`**
+- Análisis y migración de tablas y consultas operativas de auditorías (`Aud_RPreguntaProceso`, `Aud_RPreguntaSubProceso`, etc.).
+- Retiro definitivo del paquete `mssql` del package.json en el Frontend.

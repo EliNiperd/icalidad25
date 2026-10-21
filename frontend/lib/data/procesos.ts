@@ -1,15 +1,27 @@
 'use server';
 
-import { auth } from "@/auth";
-import { usegetPool, typeParameter } from "@/lib/database/connection";
+import { apiFetch } from "@/lib/api-client";
 import { ProcesoFormData } from "@/lib/schemas/proceso";
+import { revalidatePath } from "next/cache";
 
-interface ProcesosListItem {
+export interface ProcesosListItem {
     IdProceso: number;
     ClaveProceso: string;
     NombreProceso: string;
+    ClaveNombreProceso?: string;
+    ResponsableProceso?: string;
     IdEstatusProceso: boolean;
-    IdEmpleadoResponsable: number;
+    IdEmpleadoResponsable?: number;
+    NombreEmpleadoResponsable?: string;
+    Estatus?: string;
+}
+
+interface PagedProcesosResponse {
+    Items: ProcesosListItem[];
+    TotalRecords: number;
+    TotalPages: number;
+    PageNumber: number;
+    PageSize: number;
 }
 
 export interface ProcesoSPResult {
@@ -28,26 +40,21 @@ export async function getProcesos(
     totalPages: number;
     totalRecords: number
 }> {
-
     try {
-        const pool = await usegetPool("Default");
-        const request = await pool.request();
-        const typeParam = await typeParameter();
+        const params = new URLSearchParams({
+            query: query || "",
+            pageNumber: currentPage.toString(),
+            pageSize: pageSize.toString(),
+            sortBy: sortBy || "NombreProceso",
+            sortOrder: (sortOrder || "asc").toUpperCase(),
+        });
 
-        request.input("p_SearchQuery", typeParam.NVarChar(100), query || null);
-        request.input("p_IdEstatus", typeParam.NVarChar(5), '%');
-        request.input("p_PageNumber", typeParam.Int, currentPage);
-        request.input("p_PageSize", typeParam.Int, pageSize);
-        request.input("p_SortBy", typeParam.NVarChar(50), sortBy);
-        request.input("p_SortOrder", typeParam.NVarChar(4), sortOrder.toUpperCase());
-
-        const result = await request.execute("PF_Gen_TProceso");
-
-        const procesos = result.recordset as ProcesosListItem[];
-        const totalRecords = procesos.length > 0 ? (procesos[0] as any).TotalRecords : 0;
-        const totalPages = Math.ceil(totalRecords / pageSize);
-
-        return { procesos, totalPages, totalRecords };
+        const data = await apiFetch<PagedProcesosResponse>(`/procesos?${params.toString()}`);
+        return {
+            procesos: data?.Items || [],
+            totalPages: data?.TotalPages || 0,
+            totalRecords: data?.TotalRecords || 0,
+        };
     } catch (error) {
         console.error('Error al obtener los procesos:', error);
         return { procesos: [], totalPages: 0, totalRecords: 0 };
@@ -56,109 +63,74 @@ export async function getProcesos(
 
 export async function getProcesoById(id: number): Promise<ProcesosListItem | null> {
     try {
-      const pool = await usegetPool("Default");
-      const request = await pool.request();
-      const typeParam = await typeParameter();
-  
-      request.input("p_IdProceso", typeParam.Int, id);
-      const result = await request.execute("PFK_Gen_TProceso");
-      const proceso = result.recordset[0] as ProcesosListItem;
-  
-      return proceso;
+        const data = await apiFetch<ProcesosListItem>(`/procesos/${id}`);
+        return data || null;
     } catch (error) {
-      console.error(`Error al obtener el proceso con ID ${id}:`, error);
-      return null;
+        console.error(`Error al obtener el proceso con ID ${id}:`, error);
+        return null;
     }
-  }
+}
 
-
-  export async function createProceso(data: ProcesoFormData): Promise<ProcesoSPResult> {
-    const session = await auth();
-    const userId = session?.user?.id ? parseInt(session.user.id, 10) : 0;
-    if (userId === 0) return { Resultado: 403, Mensaje: "Error de autenticación." };
-
+export async function createProceso(data: ProcesoFormData): Promise<ProcesoSPResult> {
     try {
-      const pool = await usegetPool("Default");
-      const request = await pool.request();
-      const typeParam = await typeParameter();
-  
-      request.input("p_ClaveProceso", typeParam.NVarChar(50), data.ClaveProceso);
-      request.input("p_NombreProceso", typeParam.NVarChar(100), data.NombreProceso);
-      request.input("p_IdEmpleadoResponsable", typeParam.Int, data.IdEmpleadoResponsable);
-      request.input("p_IdEmpleadoAlta", typeParam.Int, userId);
-  
-      const result = await request.execute("PI_Gen_TProceso");
-      return result.recordset[0] as ProcesoSPResult;
-    } catch (error) {
-      console.error("Error al crear el proceso:", error);
-      return {
-        Resultado: 500,
-        Mensaje: "Error interno al crear el proceso.",  
-      };
+        const response = await apiFetch<ProcesoSPResult>("/procesos", {
+            method: "POST",
+            body: JSON.stringify({
+                ClaveProceso: data.ClaveProceso,
+                NombreProceso: data.NombreProceso,
+                IdEmpleadoResponsable: data.IdEmpleadoResponsable,
+            }),
+        });
+
+        revalidatePath("/icalidad/proceso");
+        return response || { Resultado: 1, Mensaje: "Proceso creado exitosamente." };
+    } catch (error: any) {
+        console.error("Error al crear el proceso:", error);
+        return {
+            Resultado: -1,
+            Mensaje: error.message || "Error interno al crear el proceso.",
+        };
     }
-  }
+}
 
-  export async function updateProceso(id: number, data: ProcesoFormData): Promise<ProcesoSPResult> {
-    const session = await auth();
-    const userId = session?.user?.id ? parseInt(session.user.id, 10) : 0;
-    if (userId === 0) return { Resultado: 403, Mensaje: "Error de autenticación." };
-
+export async function updateProceso(id: number, data: ProcesoFormData): Promise<ProcesoSPResult> {
     try {
-      const pool = await usegetPool("Default");
-      const request = await pool.request();
-      const typeParam = await typeParameter();
-  
-      request.input("p_IdProceso", typeParam.Int, id);
-      request.input("p_ClaveProceso", typeParam.NVarChar(50), data.ClaveProceso);
-      request.input("p_NombreProceso", typeParam.NVarChar(100), data.NombreProceso);
-      request.input("p_IdEstatusProceso", typeParam.Bit, data.IdEstatusProceso);
-      request.input("p_IdEmpleadoResponsable", typeParam.Int, data.IdEmpleadoResponsable);
-      request.input("p_IdEmpleadoActualiza", typeParam.Int, userId);
-  
-      const result = await request.execute("PU_Gen_TProceso");
-      return result.recordset[0] as ProcesoSPResult;
-    } catch (error) {
-      console.error("Error al actualizar el proceso:", error);
-      return {
-        Resultado: 500,
-        Mensaje: "Error interno al actualizar el proceso.",  
-      };
-    }
-  }
+        const response = await apiFetch<ProcesoSPResult>(`/procesos/${id}`, {
+            method: "PUT",
+            body: JSON.stringify({
+                IdProceso: id,
+                ClaveProceso: data.ClaveProceso,
+                NombreProceso: data.NombreProceso,
+                IdEstatusProceso: data.IdEstatusProceso,
+                IdEmpleadoResponsable: data.IdEmpleadoResponsable,
+            }),
+        });
 
-  export async function deleteProceso(id: number): Promise<ProcesoSPResult> {
+        revalidatePath("/icalidad/proceso");
+        revalidatePath(`/icalidad/proceso/${id}/edit`);
+        return response || { Resultado: id, Mensaje: "Proceso actualizado exitosamente." };
+    } catch (error: any) {
+        console.error("Error al actualizar el proceso:", error);
+        return {
+            Resultado: -1,
+            Mensaje: error.message || "Error interno al actualizar el proceso.",
+        };
+    }
+}
+
+export async function deleteProceso(id: number): Promise<ProcesoSPResult> {
     try {
-      const pool = await usegetPool("Default");
-      const request = await pool.request();
-      const typeParam = await typeParameter();
-  
-      request.input("p_IdProceso", typeParam.Int, id);
-  
-      const result = await request.execute("PD_Gen_TProceso");
-      return result.recordset[0] as ProcesoSPResult;
-    } catch (error) {
-      console.error(`Error al eliminar el proceso con ID ${id}:`, error);
-      return {
-        Resultado: 500,
-        Mensaje: "Error interno al eliminar el proceso.",  
-      };
-    }
-  } 
+        const response = await apiFetch<ProcesoSPResult>(`/procesos/${id}`, {
+            method: "DELETE",
+        });
 
-// ========== Funciones para SubProcesos ==========
-
-// Función para obtener los subprocesos de un proceso
-export async function getSubProcesos(IdProceso: number): Promise<ProcesosListItem[]> {
-    try {
-      const pool = await usegetPool("Default");
-      const request = await pool.request();
-      const typeParam = await typeParameter();
-  
-      request.input("p_IdProceso", typeParam.Int, IdProceso);
-      const result = await request.execute("PF_Gen_TSubProceso");
-      return result.recordset as ProcesosListItem[];
-    } catch (error) {
-      console.error(`Error al obtener los subprocesos para el proceso con ID ${IdProceso}:`, error);
-      return [];
+        revalidatePath("/icalidad/proceso");
+        return response || { Resultado: 1, Mensaje: "Proceso eliminado exitosamente." };
+    } catch (error: any) {
+        console.error(`Error al eliminar el proceso con ID ${id}:`, error);
+        return {
+            Resultado: -1,
+            Mensaje: error.message || "Error interno al eliminar el proceso.",
+        };
     }
-  }
+}

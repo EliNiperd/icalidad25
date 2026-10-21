@@ -5,7 +5,8 @@ export interface Proceso {
     ClaveProceso: string;
     NombreProceso: string;
     IdEstatusProceso: boolean;
-    IdEmpleadoResponsable: number;
+    IdEmpleadoResponsable?: number;
+    ResponsableProceso?: string;
 }
 
 export const procesoSchema = z.object({

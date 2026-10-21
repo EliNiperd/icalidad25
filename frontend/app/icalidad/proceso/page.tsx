@@ -5,21 +5,21 @@ import { Plus } from "lucide-react";
 import ProcesosTable from "@/app/ui/procesos/procesos-table";
 import { TableSkeleton } from "@/app/ui/shared/skeletons";
 
-
 interface ProcesoPageProps {
-    searchParams?: { 
+    searchParams?: Promise<{ 
         query?: string;
         page?: string;
         sortBy?: string;
         sortOrder?: 'asc' | 'desc';
-    }
+    }>;
 }
 
 export default async function ProcesoPage({ searchParams }: ProcesoPageProps) {
-  const query = searchParams?.query || '';
-    const currentPage = Number(searchParams?.page) || 1;
-    const sortBy = searchParams?.sortBy || 'NombreProceso'; // Columna por defecto para ordenar
-    const sortOrder = searchParams?.sortOrder || 'asc'; // Orden por defecto
+    const resolvedParams = searchParams ? await searchParams : {};
+    const query = resolvedParams.query || '';
+    const currentPage = Number(resolvedParams?.page) || 1;
+    const sortBy = resolvedParams?.sortBy || 'NombreProceso'; // Columna por defecto para ordenar
+    const sortOrder = resolvedParams?.sortOrder || 'asc'; // Orden por defecto
     const pageSize = 10; // Tamaño de página por defecto
 
     return (
