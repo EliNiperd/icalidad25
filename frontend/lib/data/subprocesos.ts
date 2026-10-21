@@ -1,8 +1,8 @@
 'use server';
 
-import { auth } from "@/auth";
-import { usegetPool, typeParameter } from "@/lib/database/connection";
+import { apiFetch } from "@/lib/api-client";
 import { SubprocesoFormData } from "@/lib/schemas/subproceso";
+import { revalidatePath } from "next/cache";
 
 export interface SubProcesoList {
     IdSubProceso: number;
@@ -18,106 +18,70 @@ export interface SubProcesoSPResult {
 
 export async function getSubProcesos(IdProceso: number): Promise<SubProcesoList[]> {
     try {
-      const pool = await usegetPool("Default");
-      const request = await pool.request();
-      const typeParam = await typeParameter();
-  
-      request.input("p_IdProceso", typeParam.Int, IdProceso);
-      const result = await request.execute("PF_Gen_RProcesoSubProceso");
-      return result.recordset as SubProcesoList[];
+        const data = await apiFetch<SubProcesoList[]>(`/procesos/${IdProceso}/subprocesos`);
+        return data || [];
     } catch (error) {
-      console.error(`Error al obtener los subprocesos para el proceso con ID ${IdProceso}:`, error);
-      return [];
+        console.error(`Error al obtener los subprocesos para el proceso con ID ${IdProceso}:`, error);
+        return [];
     }
-  }
+}
 
-  export async function createSubProceso(IdProceso: number, data: SubprocesoFormData): Promise<SubProcesoSPResult> {
-    const session = await auth();
-    const userId = session?.user?.id ? parseInt(session.user.id, 10) : 0;
-    if (userId === 0) return { Resultado: 403, Mensaje: "Error de autenticación." };
-  
+export async function createSubProceso(IdProceso: number, data: SubprocesoFormData): Promise<SubProcesoSPResult> {
     try {
-      const pool = await usegetPool("Default");
-      const request = await pool.request();
-      const typeParam = await typeParameter();
-  
-      request.input("p_IdProceso", typeParam.Int, IdProceso);
-      request.input("p_ClaveSubproceso", typeParam.NVarChar(50), data.ClaveSubproceso);
-      request.input("p_DescripcionSubproceso", typeParam.NVarChar(100), data.DescripcionSubproceso);
-      request.input("p_IdEmpleadoAlta", typeParam.Int, userId);
-  
-      const result = await request.execute("PI_Gen_RProcesoSubProceso");
-      
-      const spResult = result.recordset[0];
-      if (!spResult) {
-        return { Resultado: -1, Mensaje: "Error: El procedimiento almacenado no retornó un resultado." };
-      }
-      return spResult as SubProcesoSPResult;
+        const response = await apiFetch<SubProcesoSPResult>(`/procesos/${IdProceso}/subprocesos`, {
+            method: "POST",
+            body: JSON.stringify({
+                IdProceso: IdProceso,
+                ClaveSubProceso: data.ClaveSubproceso,
+                DescripcionSubProceso: data.DescripcionSubproceso,
+            }),
+        });
 
-    } catch (error) {
-      console.error("Error al crear el subproceso:", error);
-      return {
-        Resultado: 500,
-        Mensaje: "Error interno al crear el subproceso.",
-      };
+        revalidatePath(`/icalidad/proceso/${IdProceso}/edit`);
+        return response || { Resultado: 1, Mensaje: "SubProceso creado exitosamente." };
+    } catch (error: any) {
+        console.error("Error al crear el subproceso:", error);
+        return {
+            Resultado: -1,
+            Mensaje: error.message || "Error interno al crear el subproceso.",
+        };
     }
-  }
+}
 
-
-  export async function updateSubProceso(id: number, data: SubprocesoFormData): Promise<SubProcesoSPResult> {
-    const session = await auth();
-    const userId = session?.user?.id ? parseInt(session.user.id, 10) : 0;
-    if (userId === 0) return { Resultado: 403, Mensaje: "Error de autenticación." };
-  
+export async function updateSubProceso(id: number, data: SubprocesoFormData): Promise<SubProcesoSPResult> {
     try {
-      const pool = await usegetPool("Default");
-      const request = await pool.request();
-      const typeParam = await typeParameter();
-  
-      
-      request.input("p_IdSubproceso", typeParam.Int, id);
-      request.input("p_ClaveSubproceso", typeParam.NVarChar(50), data.ClaveSubproceso);
-      request.input("p_DescripcionSubproceso", typeParam.NVarChar(100), data.DescripcionSubproceso);
-      request.input("p_IdEmpleadoActualiza", typeParam.Int, userId);
-  
-      const result = await request.execute("PU_Gen_RProcesoSubProceso");
-      
-      const spResult = result.recordset[0];
-      if (!spResult) {
-        return { Resultado: -1, Mensaje: "Error: El procedimiento almacenado no retornó un resultado." };
-      }
-      return spResult as SubProcesoSPResult;
+        const response = await apiFetch<SubProcesoSPResult>(`/procesos/subprocesos/${id}`, {
+            method: "PUT",
+            body: JSON.stringify({
+                IdSubProceso: id,
+                IdProceso: 0,
+                ClaveSubProceso: data.ClaveSubproceso,
+                DescripcionSubProceso: data.DescripcionSubproceso,
+            }),
+        });
 
-    } catch (error) {
-      console.error("Error al actualizar el subproceso:", error);
-      return {
-        Resultado: 500,
-        Mensaje: "Error interno al actualizar el subproceso.",
-      };
+        return response || { Resultado: id, Mensaje: "SubProceso actualizado exitosamente." };
+    } catch (error: any) {
+        console.error("Error al actualizar el subproceso:", error);
+        return {
+            Resultado: -1,
+            Mensaje: error.message || "Error interno al actualizar el subproceso.",
+        };
     }
-  }
+}
 
-
-  export async function deleteSubProceso(id: number): Promise<SubProcesoSPResult> {
+export async function deleteSubProceso(id: number): Promise<SubProcesoSPResult> {
     try {
-      const pool = await usegetPool("Default");
-      const request = await pool.request();
-      const typeParam = await typeParameter();
-  
-      request.input("p_IdSubproceso", typeParam.Int, id);
-  
-      const result = await request.execute("PD_Gen_RProcesoSubProceso");
-      const spResult = result.recordset[0];
-      if (!spResult) {
-        return { Resultado: -1, Mensaje: "Error: El procedimiento almacenado no retornó un resultado." };
-      }
-      return spResult as SubProcesoSPResult;
-      
-    } catch (error) {
-      console.error(`Error al eliminar el subproceso con ID ${id}:`, error);
-      return {
-        Resultado: 500,
-        Mensaje: "Error interno al eliminar el subproceso.",
-      };
+        const response = await apiFetch<SubProcesoSPResult>(`/procesos/subprocesos/${id}`, {
+            method: "DELETE",
+        });
+
+        return response || { Resultado: 1, Mensaje: "SubProceso eliminado exitosamente." };
+    } catch (error: any) {
+        console.error(`Error al eliminar el subproceso con ID ${id}:`, error);
+        return {
+            Resultado: -1,
+            Mensaje: error.message || "Error interno al eliminar el subproceso.",
+        };
     }
-  } 
+}
