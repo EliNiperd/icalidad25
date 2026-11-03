@@ -1,0 +1,82 @@
+name: icalidad-dev
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: Developer
+      MSSQL_SA_PASSWORD: ${DB_PASS:?Define DB_PASS in .env.dev}
+    ports:
+      - "127.0.0.1:${DEV_SQL_PORT:-14333}:1433"
+    volumes:
+      - sqlserver-dev-data:/var/opt/mssql
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$${MSSQL_SA_PASSWORD}\" -C -Q \"SELECT 1\" || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+    networks:
+      - icalidad-dev-net
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:5175
+      DB_PROVIDER: SqlServer
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=${DB_NAME:-iCalidadDev};User Id=sa;Password=${DB_PASS:?Define DB_PASS in .env.dev};TrustServerCertificate=True;Encrypt=True;"
+      JWT_SECRET: ${JWT_SECRET:?Define JWT_SECRET in .env.dev}
+      JWT_ISSUER: ${JWT_ISSUER:-iCalidadAPI}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-iCalidadClients}
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      icalidad-dev-net:
+        aliases:
+          - icalidad-backend
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: dockerfile
+    environment:
+      BACKEND_API_URL: http://icalidad-backend:5175/api
+      NEXT_PUBLIC_API_URL: /api
+      NEXTAUTH_URL: http://localhost:${DEV_HTTP_PORT:-8085}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:?Define NEXTAUTH_SECRET in .env.dev}
+      JWT_SECRET: ${JWT_SECRET:?Define JWT_SECRET in .env.dev}
+      SECRET: ${SECRET:-local-development-only}
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      icalidad-dev-net:
+        aliases:
+          - icalidad-frontend
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "127.0.0.1:${DEV_HTTP_PORT:-8085}:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - frontend
+      - backend
+    restart: unless-stopped
+    networks:
+      - icalidad-dev-net
+
+networks:
+  icalidad-dev-net:
+    driver: bridge
+
+volumes:
+  sqlserver-dev-data:
