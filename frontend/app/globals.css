@@ -1,121 +1,202 @@
 @import "tailwindcss";
 
-@theme {
-  /* Primary colors */
-  --color-primary: #fafbfc; /* migrar a este estilo desde  --color-bg-primary */
-  --color-primary-50: #eef3f5;
-  --color-primary-100: #cde0e7;
-  --color-primary-200: #a5cbdb;
-  --color-primary-300: #75b9d5;
-  --color-primary-400: #4bafd7;
-  --color-primary-500: #2da9dc;
-  --color-primary-600: #199ed4;
-  --color-primary-700: #1185b5;
-  --color-primary-800: #0b6b93;
-  --color-primary-900: #065170;
-  --color-primary-950: #034059;
+@custom-variant dark (&:where(.dark, .dark *));
 
-  /* Secondary colors */
-  --color-secondary: #f3f5f7; /* migrar a este estilo desde  --color-bg-secondary */
-  --color-secondary-50: #a1c1cc;
-  --color-secondary-100: #7cb2c4;
-  --color-secondary-200: #53a3be;
-  --color-secondary-300: #3398ba;
-  --color-secondary-400: #218cb1;
-  --color-secondary-500: #167ea1;
-  --color-secondary-600: #0c6e8e;
-  --color-secondary-700: #085b77;
-  --color-secondary-800: #044960;
-  --color-secondary-900: #013547;
-  --color-secondary-950: #002836;
+:root {
+  /* Escala de marca primaria (Azul Cerúleo) */
+  --primary-50: #eef3f5;
+  --primary-100: #cde0e7;
+  --primary-200: #a5cbdb;
+  --primary-300: #75b9d5;
+  --primary-400: #4bafd7;
+  --primary-500: #2da9dc;
+  --primary-600: #199ed4;
+  --primary-700: #1185b5;
+  --primary-800: #0b6b93;
+  --primary-900: #065170;
+  --primary-950: #034059;
 
-   /* danger colors - light mode */
-    --color-danger-100: #e29d9d;
-    --color-danger-200: #d06262;
-    --color-danger-300: #b13535;
-    
+  /* Escala secundaria (Teal Profundo) */
+  --secondary-50: #a1c1cc;
+  --secondary-100: #7cb2c4;
+  --secondary-200: #53a3be;
+  --secondary-300: #3398ba;
+  --secondary-400: #218cb1;
+  --secondary-500: #167ea1;
+  --secondary-600: #0c6e8e;
+  --secondary-700: #085b77;
+  --secondary-800: #044960;
+  --secondary-900: #013547;
+  --secondary-950: #002836;
 
-  /* Semantic colors */
-  --color-success: #059669;
-  
-  --color-warning: #f59e0b;
-  --color-error: #ef4444;
-  --color-info: #2196c5;
-  --color-destructive: #ef4444;
+  /* Superficies, textos y bordes de la aplicación (Light Mode) */
+  --bg-primary: #fafbfc;
+  --bg-secondary: #f3f5f7;
+  --surface-elevated: #ffffff;
+  --text-primary: #1e2328;
+  --text-secondary: #46505a;
+  --text-tertiary: #6e7a86;
+  --border-default: #c8d2dc;
 
-  /* Background colors - Light mode (default) */
-  --color-bg-primary: #fafbfc;
-  --color-bg-secondary: #f3f5f7;
-  
-  /* Text colors - Light mode (default) */
-  --color-text-primary: #1e2328;
-  --color-text-secondary: #46505a;
-  
-  /* Border colors - Light mode (default) */
-  --color-border-default: #c8d2dc;
-  --color-default: #c8d2dc; /* Cambia el color por defecto en modo claro - migrar */
+  /* Tokens semánticos estándar (shadcn/ui y componentes compartidos) */
+  --background: var(--bg-primary);
+  --foreground: var(--text-primary);
+  --card: var(--bg-primary);
+  --card-foreground: var(--text-primary);
+  --popover: var(--surface-elevated);
+  --popover-foreground: var(--text-primary);
+  --primary: var(--primary-600);
+  --primary-foreground: #ffffff;
+  --secondary: var(--bg-secondary);
+  --secondary-foreground: var(--text-primary);
+  --muted: var(--bg-secondary);
+  --muted-foreground: var(--text-secondary);
+  --accent: var(--primary-50);
+  --accent-foreground: var(--primary-800);
+  --border: var(--border-default);
+  --input: var(--border-default);
+  --ring: var(--primary-500);
+
+  /* Estados semánticos */
+  --success: #059669;
+  --success-100: #58dbad;
+  --success-200: #28be8a;
+  --success-300: #1b7f5c;
+  --warning: #f59e0b;
+  --error: #ef4444;
+  --info: #2196c5;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --danger-100: #e29d9d;
+  --danger-200: #d06262;
+  --danger-300: #b13535;
+}
+
+:root.dark {
+  /* Superficies, textos y bordes de la aplicación (Dark Mode) */
+  --bg-primary: #12161c;
+  --bg-secondary: #192028;
+  --surface-elevated: #192028;
+  --text-primary: #f0f2f5;
+  --text-secondary: #c8cdd2;
+  --text-tertiary: #8f9aa6;
+  --border-default: #3c4855;
+
+  /* Tokens semánticos estándar (Dark Mode) */
+  --background: var(--bg-primary);
+  --foreground: var(--text-primary);
+  --card: var(--bg-primary);
+  --card-foreground: var(--text-primary);
+  --popover: var(--surface-elevated);
+  --popover-foreground: var(--text-primary);
+  --primary: var(--primary-500);
+  --primary-foreground: #ffffff;
+  --secondary: #222b36;
+  --secondary-foreground: var(--text-primary);
+  --muted: var(--bg-secondary);
+  --muted-foreground: var(--text-secondary);
+  --accent: #1d2a36;
+  --accent-foreground: var(--primary-200);
+  --border: var(--border-default);
+  --input: var(--border-default);
+  --ring: var(--primary-400);
+
+  /* Estados semánticos (Dark Mode) */
+  --success-100: #22946e;
+  --success-200: #47d5a6;
+  --success-300: #9ae8ce;
+  --danger-100: #eb9e9e;
+  --danger-200: #d94a4a;
+  --danger-300: #9c2121;
+}
+
+@theme inline {
+  /* Escala primaria */
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-50: var(--primary-50);
+  --color-primary-100: var(--primary-100);
+  --color-primary-200: var(--primary-200);
+  --color-primary-300: var(--primary-300);
+  --color-primary-400: var(--primary-400);
+  --color-primary-500: var(--primary-500);
+  --color-primary-600: var(--primary-600);
+  --color-primary-700: var(--primary-700);
+  --color-primary-800: var(--primary-800);
+  --color-primary-900: var(--primary-900);
+  --color-primary-950: var(--primary-950);
+
+  /* Escala secundaria */
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary-50: var(--secondary-50);
+  --color-secondary-100: var(--secondary-100);
+  --color-secondary-200: var(--secondary-200);
+  --color-secondary-300: var(--secondary-300);
+  --color-secondary-400: var(--secondary-400);
+  --color-secondary-500: var(--secondary-500);
+  --color-secondary-600: var(--secondary-600);
+  --color-secondary-700: var(--secondary-700);
+  --color-secondary-800: var(--secondary-800);
+  --color-secondary-900: var(--secondary-900);
+  --color-secondary-950: var(--secondary-950);
+
+  /* Semánticos de interfaz */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Tokens propios de la aplicación */
+  --color-bg-primary: var(--bg-primary);
+  --color-bg-secondary: var(--bg-secondary);
+  --color-surface-elevated: var(--surface-elevated);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
+  --color-border-default: var(--border-default);
+  --color-default: var(--border-default);
+
+  /* Estados semánticos */
+  --color-success: var(--success);
+  --color-success-100: var(--success-100);
+  --color-success-200: var(--success-200);
+  --color-success-300: var(--success-300);
+  --color-warning: var(--warning);
+  --color-error: var(--error);
+  --color-info: var(--info);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-danger-100: var(--danger-100);
+  --color-danger-200: var(--danger-200);
+  --color-danger-300: var(--danger-300);
+}
+
+/* Patrón de retícula técnica centralizado para pantallas institucionales */
+@utility bg-brand-grid {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+  background-size: 32px 32px;
 }
 
 @layer base {
-  :root {
-    /* success colors - light mode */
-    --color-success-100: #58dbad;
-    --color-success-200: #28be8a;
-    --color-success-300: #1b7f5c;
-    --color-success: #059669;
-    
-    /* danger colors - light mode */
-    --color-danger-100: #e29d9d;
-    --color-danger-200: #d06262;
-    --color-danger-300: #b13535;
-    
-    --color-destructive: #ef4444;
+  * {
+    @apply border-border;
   }
-  /* Dark mode overrides */
-  :root.dark {
-    
-    --color-bg-primary: #12161c;
-    --color-bg-secondary: #192028;
-    --color-text-primary: #f0f2f5;
-    --color-text-secondary: #c8cdd2;
-    --color-border-default: #3c4855;
-    --color-default: #3c4855; /* Cambia el color por defecto en modo oscuro */
-
-    /* Primary colors - Dark mode */
-    --color-primary-50: #eef3f5;
-    --color-primary-100: #cde0e7;
-    --color-primary-200: #a5cbdb;
-    --color-primary-300: #75b9d5;
-    --color-primary-400: #4bafd7;
-    --color-primary-500: #2da9dc;
-    --color-primary-600: #199ed4;
-    --color-primary-700: #1185b5;
-    --color-primary-800: #0b6b93;
-    --color-primary-900: #065170;
-    --color-primary-950: #034059;
-    --color-primary: #12161c;
-
-    /* Secondary colors - Dark mode */
-    --color-secondary: #192028;
-
-    /* success colors - Dark mode */
-    --color-success-100: #9ae8ce; 
-    --color-success-200: #47d5a6;
-    --color-success-100: #22946e;
-    --color-success: #059669;
-
-    /* danger colors - Dark mode */
-    --color-danger-100: #eb9e9e; 
-    --color-danger-200: #d94a4a;
-    --color-danger-300: #9c2121;
-  }
-
- 
-  
 
   body {
-    @apply bg-bg-primary text-text-primary;
-    transition: background-color 0.2s, color 0.2s;
+    @apply bg-background text-foreground antialiased;
+    transition: background-color 0.2s ease, color 0.2s ease;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -123,110 +204,6 @@
   }
 
   a {
-    @apply text-primary-600 hover:text-primary-700;
+    @apply text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 transition-colors;
   }
-  
-  :root.dark a {
-    @apply text-primary-400 hover:text-primary-300;
-  }
- 
 }
-
-/* Dark mode overrides */
-/* Base colors */
-/* --clr-dark-a0: #000000;
---clr-light-a0: #ffffff; */
-
-/** Theme primary colors */
-/* --clr-primary-a0: #2da9dc;
---clr-primary-a10: #54b2e0;
---clr-primary-a20: #6fbce4;
---clr-primary-a30: #87c5e8;
---clr-primary-a40: #9dcfec;
---clr-primary-a50: #b1d8f0; */
-
-/** Theme surface colors */
-/* --clr-surface-a0: #12161c;
---clr-surface-a10: #282b31;
---clr-surface-a20: #3f4247;
---clr-surface-a30: #575a5f;
---clr-surface-a40: #717377;
---clr-surface-a50: #8b8d91; */
-
-/** Theme tonal surface colors */
-/* --clr-surface-tonal-a0: #18232c;
---clr-surface-tonal-a10: #2e3840;
---clr-surface-tonal-a20: #454d55;
---clr-surface-tonal-a30: #5d646b;
---clr-surface-tonal-a40: #767c82;
---clr-surface-tonal-a50: #90959a; */
-
-/** Success colors */
-/* --clr-success-a0: #22946e;
---clr-success-a10: #47d5a6;
---clr-success-a20: #9ae8ce; */
-
-/** Warning colors */
-/* --clr-warning-a0: #a87a2a;
---clr-warning-a10: #d7ac61;
---clr-warning-a20: #ecd7b2; */
-
-/** Danger colors */
-/* --clr-danger-a0: #9c2121;
---clr-danger-a10: #d94a4a;
---clr-danger-a20: #eb9e9e; */
-
-/** Info colors */
-/* --clr-info-a0: #21498a;
---clr-info-a10: #4077d1;
---clr-info-a20: #92b2e5; */
-
-/* Ligth mode overrides *"
-/** Base colors */
-/* --clr-dark-a0: #000000;
---clr-light-a0: #ffffff; */
-
-/** Theme primary colors */
-/* --clr-primary-a0: #2da9dc;
---clr-primary-a10: #2d95c1;
---clr-primary-a20: #2b81a6;
---clr-primary-a30: #296d8d;
---clr-primary-a40: #255b74;
---clr-primary-a50: #21485c; */
-
-/** Theme surface colors */
-/* --clr-surface-a0: #fafbfc;
---clr-surface-a10: #eceded;
---clr-surface-a20: #dededf;
---clr-surface-a30: #d0d0d1;
---clr-surface-a40: #c2c2c3;
---clr-surface-a50: #b4b5b5; */
-
-/** Theme tonal surface colors */
-/* --clr-surface-tonal-a0: #e9f3f9;
---clr-surface-tonal-a10: #dde6eb;
---clr-surface-tonal-a20: #d1d8dd;
---clr-surface-tonal-a30: #c5cbcf;
---clr-surface-tonal-a40: #b9bec1;
---clr-surface-tonal-a50: #adb1b4; */
-
-/** Success colors */
-/* --clr-success-a0: #1b7f5c;
---clr-success-a10: #28be8a;
---clr-success-a20: #58dbad; */
-
-/** Warning colors */
-/* --clr-warning-a0: #b8871f;
---clr-warning-a10: #dfae44;
---clr-warning-a20: #ebca85; */
-
-/** Danger colors */
-/* --clr-danger-a0: #b13535;
---clr-danger-a10: #d06262;
---clr-danger-a20: #e29d9d; */
-
-/** Info colors */
-/* --clr-info-a0: #1e56a3;
---clr-info-a10: #347ada;
---clr-info-a20: #74a4e6; */
-

@@ -104,16 +104,16 @@ export default function CreateEditForm({
     router.refresh();
   };
 
-  const selectStyle =`w-full p-2 border rounded-md bg-primary border-default 
+  const selectStyle =`w-full p-2 border rounded-md bg-bg-primary border-border-default 
     text-text-primary placeholder:text-text-secondary focus:outline-none 
     focus:border-primary-600 focus:ring-1 focus:ring-primary-600`;
-  const inputStyle = `w-full p-2 border rounded-md bg-primary border-border-default 
+  const inputStyle = `w-full p-2 border rounded-md bg-bg-primary border-border-default 
     text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-primary-600 
     focus:ring-1 focus:ring-primary-600 `;
   const errorInputStyle = 'border-danger-300 focus:ring-danger-500 dark:border-danger-600 placeholder:text-danger-200 '
   const errorTextStyle = `text-danger-200 text-sm flex items-center gap-1`;
   const errorIconStyle = 'h-4 w-4 text-danger-200 flex-shrink-0'
-  const formStyle = `bg-secondary border-2 border-border-default rounded-lg shadow-lg p-6 space-y-6 `;
+  const formStyle = `bg-bg-secondary border-2 border-border-default rounded-lg shadow-lg p-6 space-y-6 `;
 
   return (
     <Card className="max-w-2xl mx-auto border-none">

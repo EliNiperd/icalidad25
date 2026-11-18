@@ -15,10 +15,10 @@ interface DatosGeneralesFormProps {
 }
 
 // Estilos compartidos (pueden moverse a un archivo de constantes si se usan en más lugares)
-const inputStyle = `w-full p-2 border rounded-md bg-primary border-border-default 
+const inputStyle = `w-full p-2 border rounded-md bg-bg-primary border-border-default 
   text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-primary-600 
   focus:ring-1 focus:ring-primary-600 `;
-const selectStyle = `w-full p-2 border rounded-md bg-primary border-default 
+const selectStyle = `w-full p-2 border rounded-md bg-bg-primary border-border-default 
   text-text-primary placeholder:text-text-secondary focus:outline-none 
   focus:border-primary-600 focus:ring-1 focus:ring-primary-600`;
 const errorInputStyle = "border-danger-300 focus:ring-danger-500 dark:border-danger-600 placeholder:text-danger-200 ";

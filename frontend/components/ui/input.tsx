@@ -2,18 +2,55 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
-const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
-  ({ className, type, ...props }, ref) => {
+export interface InputProps extends React.ComponentProps<"input"> {
+  startIcon?: React.ReactNode
+  endAdornment?: React.ReactNode
+  containerClassName?: string
+}
+
+const baseInputClasses =
+  "flex h-10 w-full rounded-lg border border-input bg-surface-elevated px-3 py-2 text-base text-foreground shadow-xs transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-text-tertiary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-primary-600 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+
+const Input = React.forwardRef<HTMLInputElement, InputProps>(
+  ({ className, containerClassName, type, startIcon, endAdornment, ...props }, ref) => {
+    if (!startIcon && !endAdornment) {
+      return (
+        <input
+          type={type}
+          className={cn(baseInputClasses, className)}
+          ref={ref}
+          {...props}
+        />
+      )
+    }
+
     return (
-      <input
-        type={type}
-        className={cn(
-          "flex h-9 w-full rounded-md border border-theme-default bg-theme-primary px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-theme-primary placeholder:text-theme-tertiary text-theme-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:border-transparent disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
-          className
+      <div className={cn("relative flex items-center w-full", containerClassName)}>
+        {startIcon && (
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute left-3 flex items-center text-text-tertiary"
+          >
+            {startIcon}
+          </span>
         )}
-        ref={ref}
-        {...props}
-      />
+        <input
+          type={type}
+          className={cn(
+            baseInputClasses,
+            startIcon && "pl-10",
+            endAdornment && "pr-10",
+            className
+          )}
+          ref={ref}
+          {...props}
+        />
+        {endAdornment && (
+          <div className="absolute right-1.5 flex items-center">
+            {endAdornment}
+          </div>
+        )}
+      </div>
     )
   }
 )

@@ -89,7 +89,7 @@ export default function CreateEditForm({
     router.refresh();
   };
 
-  const formStyle = `bg-secondary border-2 border-border-default rounded-lg shadow-lg p-6`;
+  const formStyle = `bg-bg-secondary border-2 border-border-default rounded-lg shadow-lg p-6`;
   const tabsTriggerStyle = `px-4 py-2 -mb-[2px] cursor-pointer border-t-2 border-l-2 border-r-2 border-transparent rounded-t-md rounded-b-none
     data-[state=active]:bg-primary-400 data-[state=active]:text-white 
     data-[state=active]:border-border-default data-[state=active]:border-b-primary-400
