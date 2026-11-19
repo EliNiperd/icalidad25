@@ -30,10 +30,22 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 function getSafeCallbackUrl(rawUrl: string | null): string {
-  if (!rawUrl || !rawUrl.startsWith('/') || rawUrl.startsWith('//')) {
-    return '/icalidad/dashboard';
+  if (!rawUrl) return '/icalidad/dashboard';
+
+  if (rawUrl.startsWith('/') && !rawUrl.startsWith('//')) {
+    return rawUrl;
   }
-  return rawUrl;
+
+  try {
+    const parsed = new URL(rawUrl, window.location.origin);
+    if (parsed.origin === window.location.origin) {
+      return `${parsed.pathname}${parsed.search}${parsed.hash}` || '/icalidad/dashboard';
+    }
+  } catch {
+    // URL inválida: usar dashboard por defecto
+  }
+
+  return '/icalidad/dashboard';
 }
 
 export default function LoginForm() {
@@ -77,8 +89,7 @@ export default function LoginForm() {
         }
 
         const destination = getSafeCallbackUrl(searchParams.get('callbackUrl'));
-        router.push(destination);
-        router.refresh();
+        window.location.assign(destination);
       } catch (error: any) {
         setServerError(error?.message || 'Error inesperado al iniciar sesión.');
       }
