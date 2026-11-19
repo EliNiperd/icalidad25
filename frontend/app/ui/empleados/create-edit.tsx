@@ -112,7 +112,7 @@ export default function CreateEditFormCompleto({
     }
   };
 
-  const handleCancel = () => router.back();
+  const handleCancel = () => router.push("/icalidad/empleado");
   const handleCreateAnother = () => setShowSuccessMessage(false);
   const handleGoToList = () => router.push("/icalidad/empleado");
 

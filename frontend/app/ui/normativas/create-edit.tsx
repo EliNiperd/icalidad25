@@ -105,7 +105,7 @@ export default function CreateEditForm({ normativa }: CreateEditFormProps) {
   };
 
   const handleCancel = () => {
-    router.back();
+    router.push("/icalidad/normativa");
   };
 
   const handleCreateAnother = () => {

@@ -92,7 +92,7 @@ export default function CreateEditForm({
   };
 
   const handleCancel = () => {
-    router.back();
+    router.push("/icalidad/requisito");
   };
 
   const handleCreateAnother = () => {

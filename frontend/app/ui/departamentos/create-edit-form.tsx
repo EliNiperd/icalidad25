@@ -95,7 +95,7 @@ export default function CreateEditForm({
   };
 
   const handleCancel = () => {
-    router.back();
+    router.push("/icalidad/departamento");
   };
 
   const handleCreateAnother = () => {

@@ -33,6 +33,12 @@ services:
       JWT_SECRET: ${JWT_SECRET:?Define JWT_SECRET in .env.dev}
       JWT_ISSUER: ${JWT_ISSUER:-iCalidadAPI}
       JWT_AUDIENCE: ${JWT_AUDIENCE:-iCalidadClients}
+      Smtp__Host: ${SMTP_HOST:-}
+      Smtp__Port: ${SMTP_PORT:-587}
+      Smtp__User: ${SMTP_USER:-}
+      Smtp__Password: ${SMTP_PASSWORD:-}
+      Smtp__From: ${SMTP_FROM:-}
+      Smtp__EnableSsl: ${SMTP_ENABLE_SSL:-true}
     depends_on:
       sqlserver:
         condition: service_healthy

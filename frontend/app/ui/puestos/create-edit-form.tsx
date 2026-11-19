@@ -77,7 +77,7 @@ export default function CreateEditForm({ puesto, departamentos }: CreateEditForm
   };
 
   const handleCancel = () => {
-    router.back();
+    router.push('/icalidad/puesto');
   }
 
   const handleCreateAnother = () => {

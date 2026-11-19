@@ -82,7 +82,7 @@ export default function CreateEditForm({
     }
   };
 
-  const handleCancel = () => router.back();
+  const handleCancel = () => router.push("/icalidad/proceso");
   const handleCreateAnother = () => setShowSuccessMessage(false);
   const handleGoToList = () => {
     router.push("/icalidad/proceso");
