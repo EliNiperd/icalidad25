@@ -80,6 +80,7 @@ export async function loginWithBackendAPI(
 
 export const { auth, signIn, signOut, handlers } = NextAuth({
   ...authConfig,
+  useSecureCookies: (process.env.AUTH_URL || process.env.NEXTAUTH_URL || "").startsWith("https://"),
   session: {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 días máximo (controlado por customExp según Recordarme)
