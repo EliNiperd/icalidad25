@@ -1,7 +1,8 @@
-using System.Net;
-using System.Net.Mail;
+using MailKit.Net.Smtp;
+using MailKit.Security;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using MimeKit;
 using iCalidad.Application.Common.Interfaces;
 
 namespace iCalidad.Infrastructure.Services
@@ -42,28 +43,28 @@ namespace iCalidad.Infrastructure.Services
 
             var port = int.TryParse(portValue, out var parsedPort) ? parsedPort : 587;
 
-            using var message = new MailMessage
-            {
-                From = new MailAddress(from),
-                Subject = subject,
-                Body = htmlBody,
-                IsBodyHtml = true
-            };
-            message.To.Add(toEmail);
+            var message = new MimeMessage();
+            message.From.Add(MailboxAddress.Parse(from));
+            message.To.Add(MailboxAddress.Parse(toEmail));
+            message.Subject = subject;
+            message.Body = new BodyBuilder { HtmlBody = htmlBody }.ToMessageBody();
 
-            using var client = new SmtpClient(host, port)
-            {
-                EnableSsl = enableSsl,
-                DeliveryMethod = SmtpDeliveryMethod.Network,
-                UseDefaultCredentials = false
-            };
+            var socketOptions = !enableSsl
+                ? SecureSocketOptions.None
+                : port == 465
+                    ? SecureSocketOptions.SslOnConnect
+                    : SecureSocketOptions.StartTls;
+
+            using var client = new SmtpClient();
+            await client.ConnectAsync(host, port, socketOptions, cancellationToken);
 
             if (!string.IsNullOrWhiteSpace(user) && !string.IsNullOrWhiteSpace(password))
             {
-                client.Credentials = new NetworkCredential(user, password);
+                await client.AuthenticateAsync(user, password, cancellationToken);
             }
 
-            await client.SendMailAsync(message, cancellationToken);
+            await client.SendAsync(message, cancellationToken);
+            await client.DisconnectAsync(true, cancellationToken);
         }
     }
 }
