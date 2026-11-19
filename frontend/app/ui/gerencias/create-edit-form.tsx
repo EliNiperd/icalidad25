@@ -72,7 +72,7 @@ export default function GerenciaForm({ gerencia }: GerenciaFormProps) {
   };
 
   const handleCancel = () => {
-    router.back();
+    router.push('/icalidad/gerencia');
   };
 
   const handleCreateAnother = () => {
