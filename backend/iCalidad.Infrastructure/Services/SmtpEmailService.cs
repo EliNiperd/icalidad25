@@ -63,7 +63,7 @@ namespace iCalidad.Infrastructure.Services
                 await client.AuthenticateAsync(user, password, cancellationToken);
             }
 
-            await client.SendAsync(message, cancellationToken);
+            await client.SendAsync(new MailKit.SendRequest(message), cancellationToken);
             await client.DisconnectAsync(true, cancellationToken);
         }
     }
