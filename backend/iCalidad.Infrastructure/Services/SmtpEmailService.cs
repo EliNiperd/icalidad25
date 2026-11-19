@@ -54,7 +54,8 @@ namespace iCalidad.Infrastructure.Services
             using var client = new SmtpClient(host, port)
             {
                 EnableSsl = enableSsl,
-                DeliveryMethod = SmtpDeliveryMethod.Network
+                DeliveryMethod = SmtpDeliveryMethod.Network,
+                UseDefaultCredentials = false
             };
 
             if (!string.IsNullOrWhiteSpace(user) && !string.IsNullOrWhiteSpace(password))
