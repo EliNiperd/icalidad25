@@ -8,8 +8,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Planned
-- Migration of Módulo 5: Normativas y Requisitos (`/icalidad/normativa`, `/icalidad/requisito`).
-- Migration of Módulo 6: Procesos y Sub-Procesos (`/icalidad/proceso`).
+- Migration of remaining catalogs.
+
+## [1.8.0] - 2026-11-18
+
+### Added
+- **Rediseño UI/UX de Autenticación y Recuperación de Contraseña**:
+  - **Frontend (`Next.js 16` & `Tailwind CSS v4`)**:
+    - Nuevo componente de marca `BrandLogo` con isotipo SVG geométrico para `iCalidad`.
+    - Layout reutilizable `AuthSplitLayout` con soporte completo de tema Claro/Oscuro (`ThemeSwitcher`).
+    - Nuevo `LoginForm` con validación `react-hook-form` + `zod`, iconos en campos (`User`, `Lock`), alternancia de visibilidad de contraseña (`Eye`/`EyeOff`), estado de carga (`disabled={isPending}`) y alertas accesibles (`role="alert"`).
+    - Opción **"Recordarme en este equipo"** conectada a la duración de la sesión (30 días si se marca; 8 horas por defecto).
+    - Protección de rutas `/icalidad/:path*` mediante `frontend/middleware.ts` con retorno automático vía `callbackUrl` tras expirar o cerrar sesión.
+    - Flujo completo de recuperación de contraseña en `/login/recuperar` y `/login/restablecer`.
+  - **Backend (`.NET 9` & `EF Core`)**:
+    - Endpoints `POST /api/auth/forgot-password` y `POST /api/auth/reset-password` con tokens HMAC-SHA256 de un solo uso (expiración de 15 min) y hash BCrypt.
+    - Servicio `IEmailService` / `SmtpEmailService` implementado con **MailKit 5.0** (`STARTTLS` / `SSL`) configurado por variables de entorno `Smtp__*`, con respaldo de log en desarrollo.
+    - Migración EF Core `20261119000253_ExpandEmpleadoPasswordLength` para ampliar `Gen_TEmpleado.Password` a `NVARCHAR(255)`.
+
+### Changed
+- **Centralización de Diseño en Tailwind CSS v4**:
+  - Unificación de tokens semánticos en `frontend/app/globals.css` (`:root`, `:root.dark`, `@theme inline`, `@custom-variant dark` y `@utility bg-brand-grid`).
+  - Normalización de componentes base (`card.tsx`, `input.tsx`, `button.tsx`, `label.tsx`) eliminando tokens huérfanos `*-theme-*` y añadiendo `Card variant="elevated"` e `Input` con `startIcon`/`endAdornment`.
+  - Homologación de botones **Cancelar** en todos los catálogos (`gerencias`, `departamentos`, `puestos`, `empleados`, `normativas`, `procesos`, `requisitos`) para navegar al listado correspondiente en lugar de `router.back()`.
+
+### Fixed
+- Compatibilidad de cookies de sesión NextAuth en ambientes HTTP locales (`useSecureCookies` condicionado a `https://`) y `trustHost: true` en `auth.config.ts` para `middleware.ts`.
 
 ## [1.5.0] - 2026-09-28
 
