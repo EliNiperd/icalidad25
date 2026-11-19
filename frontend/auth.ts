@@ -80,11 +80,16 @@ export async function loginWithBackendAPI(
 
 export const { auth, signIn, signOut, handlers } = NextAuth({
   ...authConfig,
+  session: {
+    strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 días máximo (controlado por customExp según Recordarme)
+  },
   providers: [
     Credentials({
       credentials: {
         username: { label: "Username", type: "text" },
         password: { label: "Password", type: "password" },
+        rememberMe: { label: "RememberMe", type: "text" },
       },
       async authorize(credentials) {
         const parsedCredentials = loginSchema.safeParse(credentials);
@@ -95,6 +100,7 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
         }
 
         const { username, password } = parsedCredentials.data;
+        const rememberMe = credentials?.rememberMe === "true";
         const result = await loginWithBackendAPI(username, password);
 
         if (!result.success || !result.data) {
@@ -123,6 +129,7 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
           token: token,
           idRol: idRol,
           nombreRol: nombreRol,
+          rememberMe,
         };
       },
     }),
@@ -131,6 +138,9 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
   callbacks: {
     jwt({ token, user }) {
       if (user) {
+        const rememberMe = Boolean((user as any).rememberMe);
+        const ttlSeconds = rememberMe ? 30 * 24 * 60 * 60 : 8 * 60 * 60;
+        token.customExp = Math.floor(Date.now() / 1000) + ttlSeconds;
         token.id = user.id ?? token.id ?? "";
         token.username = user.username ?? token.username ?? "";
         token.roles = (user as any).roles ?? token.roles ?? [];
@@ -138,6 +148,14 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
         token.nombreRol = (user as any).nombreRol ?? token.nombreRol ?? "";
         token.idRol = (user as any).idRol ?? token.idRol ?? 0;
       }
+
+      if (
+        typeof token.customExp === "number" &&
+        Math.floor(Date.now() / 1000) > token.customExp
+      ) {
+        return null;
+      }
+
       return token;
     },
     session({ session, token }) {

@@ -19,7 +19,7 @@ namespace iCalidad.Infrastructure.Persistence.Configurations
                 .HasMaxLength(20);
 
             builder.Property(e => e.Password)
-                .HasMaxLength(20);
+                .HasMaxLength(255);
 
             builder.Property(e => e.Correo)
                 .HasMaxLength(100);

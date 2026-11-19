@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using iCalidad.Infrastructure.Persistence;
 using iCalidad.Infrastructure.Security;
+using iCalidad.Infrastructure.Services;
 using iCalidad.Application.Common.Interfaces;
 
 namespace iCalidad.Infrastructure
@@ -34,6 +35,7 @@ namespace iCalidad.Infrastructure
 
             // Registramos el generador de tokens JWT
             services.AddScoped<ITokenService, TokenService>();
+            services.AddScoped<IEmailService, SmtpEmailService>();
 
             return services;
         }
