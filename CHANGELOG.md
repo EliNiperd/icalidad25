@@ -10,6 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Planned
 - Migration of remaining catalogs.
 
+## [1.8.1] - 2026-11-23
+
+### Added
+- Variables `Smtp__*` (`SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM`, `SMTP_ENABLE_SSL`) en `.github/workflows/deploy.yml` para el despliegue de producción en VPS.
+- Documentación de la actualización de autenticación, Tailwind v4 y recuperación de contraseña en `GEMINI.md`.
+
 ## [1.8.0] - 2026-11-18
 
 ### Added

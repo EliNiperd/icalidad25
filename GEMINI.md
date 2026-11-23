@@ -562,3 +562,21 @@ El catálogo de Procesos y Sub-Procesos quedó 100% migrado a la WebAPI en C# .N
 👉 **Fase 6: Módulo Operativo de Auditorías (`Aud_*`) y Eliminación de Conexión Legada `mssql`**
 - Análisis y migración de tablas y consultas operativas de auditorías (`Aud_RPreguntaProceso`, `Aud_RPreguntaSubProceso`, etc.).
 - Retiro definitivo del paquete `mssql` del package.json en el Frontend.
+
+---
+
+## Rediseño UI/UX del Login, Centralización Tailwind v4 y Recuperación de Contraseña (v1.8.0 - v1.8.1)
+
+### Acciones Realizadas
+1. **Centralización de Diseño en Tailwind CSS v4 (`frontend/app/globals.css` y `components/ui/*`):**
+   - Unificación de tokens semánticos en `:root`, `:root.dark` y `@theme inline`, agregando `@custom-variant dark (&:where(.dark, .dark *));` y `@utility bg-brand-grid`.
+   - Normalización de `card.tsx` (`variant="elevated"`), `input.tsx` (`startIcon` y `endAdornment`), `button.tsx` y `label.tsx`, eliminando tokens huérfanos `*-theme-*`.
+   - Homologación de botones **Cancelar** en todos los catálogos para navegar a `/icalidad/<catalogo>` en lugar de `router.back()`.
+2. **Rediseño del Login, Sesión y Retorno (`callbackUrl`):**
+   - Creación de `BrandLogo` (isotipo SVG) y `AuthSplitLayout` con `ThemeSwitcher` (Claro/Oscuro).
+   - Nuevo `LoginForm` con `react-hook-form` + `zod`, botón mostrar/ocultar contraseña, opción **"Recordarme en este equipo"** (30 días vs 8 horas) y `frontend/middleware.ts` para redirección automática con `callbackUrl`.
+   - Compatibilidad de cookies en HTTP local (`useSecureCookies` condicionado a `https://`) y `trustHost: true` en `auth.config.ts`.
+3. **Recuperación de Contraseña y Migración EF Core:**
+   - Endpoints `POST /api/auth/forgot-password` y `POST /api/auth/reset-password` con tokens HMAC-SHA256 de un solo uso y BCrypt.
+   - Servicio `SmtpEmailService` con **MailKit 5.0** y variables `Smtp__*` expuestas tanto en `docker-compose-dev.yml` como en `.github/workflows/deploy.yml`.
+   - Migración EF Core `20261119000253_ExpandEmpleadoPasswordLength` aplicada en desarrollo y producción (`Gen_TEmpleado.Password` → `nvarchar(255)`).
