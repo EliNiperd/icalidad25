@@ -79,6 +79,12 @@ jobs:
               -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
               -e JWT_ISSUER="iCalidadAPI" \
               -e JWT_AUDIENCE="iCalidadClients" \
+              -e Smtp__Host="${{ secrets.SMTP_HOST }}" \
+              -e Smtp__Port="${{ secrets.SMTP_PORT }}" \
+              -e Smtp__User="${{ secrets.SMTP_USER }}" \
+              -e Smtp__Password="${{ secrets.SMTP_PASSWORD }}" \
+              -e Smtp__From="${{ secrets.SMTP_FROM }}" \
+              -e Smtp__EnableSsl="${{ secrets.SMTP_ENABLE_SSL }}" \
               $BACKEND_IMAGE
 
             # 2. Iniciar Frontend Next.js (sin puertos públicos, IP fija y mapping a backend)
